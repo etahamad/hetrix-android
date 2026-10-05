@@ -2,6 +2,9 @@ package io.github.etahamad.hetrix.ui.settings
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,30 +26,28 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CleaningServices
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.NetworkCheck
-import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,10 +55,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -67,32 +68,44 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.etahamad.hetrix.ui.main.AutoRefreshInterval
 import io.github.etahamad.hetrix.ui.theme.AppThemeMode
+import io.github.etahamad.hetrix.ui.theme.DarkCardBg
+import io.github.etahamad.hetrix.ui.theme.DarkCardBorder
+import io.github.etahamad.hetrix.ui.theme.DarkNavBg
+import io.github.etahamad.hetrix.ui.theme.DarkPillActive
+import io.github.etahamad.hetrix.ui.theme.DarkTextMuted
+import io.github.etahamad.hetrix.ui.theme.DarkTextPrimary
+import io.github.etahamad.hetrix.ui.theme.FigmaGreenAccent
+import io.github.etahamad.hetrix.ui.theme.FigmaGreenMint
+import io.github.etahamad.hetrix.ui.theme.StatusDegradedYellow
+import io.github.etahamad.hetrix.ui.theme.StatusDownCrimson
 import io.github.etahamad.hetrix.ui.theme.StatusOperationalGreen
-import kotlinx.coroutines.launch
 
 /**
- * View 4 — Settings & API Vault.
+ * View 4 — Settings & API Vault (Pages 21–25 of specification).
  *
  * Implements:
- * - Connection & API Key Vault Card (with Test Connection, Replace Key, Disconnect)
- * - Appearance Settings (System, Dark Slate, Light Crisp)
- * - Auto-refresh Interval Selector (Manual, 30s, 1m, 5m)
- * - Privacy & Local-Only Data Policy + Clear Cache Action
- * - About & Open Source GPLv3 metadata
+ * - API Vault Card with Connection test, Replace Key, Disconnect
+ * - Appearance 3-segment pill toggle (System, Dark, Light)
+ * - Foreground refresh toggle & interval configuration
+ * - Privacy & local cache management with clear cache action
+ * - About & documentation card
+ * - Vault safety footnote
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,13 +130,13 @@ fun SettingsScreen(
     var showDisconnectDialog by remember { mutableStateOf(false) }
     var showCacheClearedDialog by remember { mutableStateOf(false) }
 
-    val maskedToken = remember(currentToken) {
-        if (!currentToken.isNullOrBlank() && currentToken.length > 8) {
-            "${currentToken.take(4)}••••••••••••••••••••${currentToken.takeLast(4)}"
-        } else {
-            currentToken ?: "No token connected"
-        }
-    }
+    val isConnected = !currentToken.isNullOrBlank()
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val cardBg = if (isDark) DarkCardBg else MaterialTheme.colorScheme.surface
+    val cardBorder = if (isDark) DarkCardBorder else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+    val innerSurfaceBg = if (isDark) DarkNavBg else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    val textPrimary = if (isDark) DarkTextPrimary else MaterialTheme.colorScheme.onSurface
+    val textMuted = if (isDark) DarkTextMuted else MaterialTheme.colorScheme.onSurfaceVariant
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -136,14 +149,25 @@ fun SettingsScreen(
                         text = "Settings",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.3).sp
+                            letterSpacing = (-0.3).sp,
+                            fontSize = 22.sp
                         ),
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = textPrimary
                     )
+                },
+                actions = {
+                    IconButton(onClick = onTestConnection, enabled = !isTestingConnection) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = "Security status",
+                            tint = StatusOperationalGreen,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    scrolledContainerColor = MaterialTheme.colorScheme.background
                 ),
                 modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
             )
@@ -153,323 +177,182 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Section 1: API Connection & Vault Card
+            // Card 1: API Vault
             item(key = "api_vault_card") {
-                SectionHeader(title = "API VAULT")
-
                 OutlinedCard(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-                    ),
+                    colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Header Row: API Vault + Status Badge
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.weight(1f, fill = false),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(38.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = Icons.Default.Key,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = "HetrixTools API Key",
-                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = "Encrypted on-device",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "API Vault",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                ),
+                                color = textPrimary
+                            )
 
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = StatusOperationalGreen.copy(alpha = 0.15f)
+                                color = if (isConnected) DarkPillActive else StatusDownCrimson.copy(alpha = 0.15f)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "Connected",
-                                        tint = StatusOperationalGreen,
-                                        modifier = Modifier.size(13.dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(
+                                                color = if (isConnected) StatusOperationalGreen else StatusDownCrimson,
+                                                shape = CircleShape
+                                            )
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "Connected",
+                                        text = if (isConnected) "Connected" else "Disconnected",
                                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = StatusOperationalGreen
+                                        color = if (isConnected) StatusOperationalGreen else StatusDownCrimson
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Masked Token Field
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        // Credential state & sync timestamp
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                text = maskedToken,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 12.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                                text = if (isConnected) "Credential stored securely" else "No active credential",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                color = textPrimary
+                            )
+                            Text(
+                                text = "Last successful sync · Just now",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = textMuted
                             )
                         }
 
-                        // Test Connection Result feedback
+                        // Test Connection Result feedback if available
                         if (connectionTestResult != null) {
-                            Spacer(modifier = Modifier.height(10.dp))
+                            val isOk = connectionTestResult.contains("OK", ignoreCase = true) ||
+                                    connectionTestResult.contains("verified", ignoreCase = true) ||
+                                    connectionTestResult.contains("successful", ignoreCase = true)
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (connectionTestResult.contains("OK")) {
-                                    StatusOperationalGreen.copy(alpha = 0.12f)
-                                } else {
-                                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-                                },
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isOk) StatusOperationalGreen.copy(alpha = 0.12f) else StatusDownCrimson.copy(alpha = 0.12f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
                                     text = connectionTestResult,
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = if (connectionTestResult.contains("OK")) {
-                                        StatusOperationalGreen
-                                    } else {
-                                        MaterialTheme.colorScheme.error
-                                    },
+                                    color = if (isOk) StatusOperationalGreen else StatusDownCrimson,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Action Buttons: Two top action buttons + full width Disconnect button
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = onTestConnection,
-                                enabled = !isTestingConnection,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                if (isTestingConnection) {
-                                    CircularProgressIndicator(
-                                        strokeWidth = 2.dp,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Testing…", fontSize = 12.sp)
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Default.NetworkCheck,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Test Connection", fontSize = 12.sp)
-                                }
-                            }
-
-                            OutlinedButton(
-                                onClick = { showReplaceKeySheet = true },
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Replace Key", fontSize = 12.sp)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        FilledTonalButton(
-                            onClick = { showDisconnectDialog = true },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
-                                contentColor = MaterialTheme.colorScheme.error
+                        // Full-width Test Connection Pill Button
+                        Button(
+                            onClick = onTestConnection,
+                            enabled = !isTestingConnection && isConnected,
+                            shape = RoundedCornerShape(100.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = FigmaGreenAccent,
+                                contentColor = Color.White,
+                                disabledContainerColor = FigmaGreenAccent.copy(alpha = 0.4f),
+                                disabledContentColor = Color.White.copy(alpha = 0.6f)
                             ),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Disconnect Account", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
-                        }
-                    }
-                }
-            }
-
-            // Section 2: Appearance & Theme
-            item(key = "appearance_group") {
-                SectionHeader(title = "APPEARANCE")
-
-                OutlinedCard(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        AppThemeMode.entries.forEachIndexed { index, mode ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSetThemeMode(mode) }
-                                    .padding(vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = when (mode) {
-                                        AppThemeMode.SYSTEM -> Icons.Default.Security
-                                        AppThemeMode.DARK -> Icons.Default.DarkMode
-                                        AppThemeMode.LIGHT -> Icons.Default.LightMode
-                                    },
-                                    contentDescription = null,
-                                    tint = if (themeMode == mode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = mode.title,
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = when (mode) {
-                                            AppThemeMode.SYSTEM -> "Follows system theme"
-                                            AppThemeMode.DARK -> "Dark Slate theme"
-                                            AppThemeMode.LIGHT -> "Crisp Light theme"
-                                        },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                RadioButton(
-                                    selected = themeMode == mode,
-                                    onClick = { onSetThemeMode(mode) }
-                                )
-                            }
-                            if (index < AppThemeMode.entries.size - 1) {
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                                    thickness = 0.8.dp
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Section 3: Polling & Auto-Refresh Interval
-            item(key = "refresh_group") {
-                SectionHeader(title = "AUTO-REFRESH")
-
-                OutlinedCard(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        AutoRefreshInterval.entries.forEachIndexed { index, interval ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSetAutoRefreshInterval(interval) }
-                                    .padding(vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Sync,
-                                    contentDescription = null,
-                                    tint = if (autoRefreshInterval == interval) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            if (isTestingConnection) {
+                                CircularProgressIndicator(
+                                    strokeWidth = 2.dp,
+                                    color = Color.White,
                                     modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = interval.label,
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        color = MaterialTheme.colorScheme.onSurface
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Testing connection…",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Test Connection",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
                                     )
-                                    Text(
-                                        text = when (interval) {
-                                            AutoRefreshInterval.OFF -> "Manual refresh only"
-                                            AutoRefreshInterval.EVERY_30S -> "Every 30 seconds"
-                                            AutoRefreshInterval.EVERY_1M -> "Every 1 minute"
-                                            AutoRefreshInterval.EVERY_5M -> "Every 5 minutes"
-                                        },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                RadioButton(
-                                    selected = autoRefreshInterval == interval,
-                                    onClick = { onSetAutoRefreshInterval(interval) }
                                 )
                             }
-                            if (index < AutoRefreshInterval.entries.size - 1) {
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                                    thickness = 0.8.dp
+                        }
+
+                        // Row with Replace API Key and Disconnect outlined pill buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showReplaceKeySheet = true },
+                                shape = RoundedCornerShape(100.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = innerSurfaceBg,
+                                    contentColor = textPrimary
+                                ),
+                                border = BorderStroke(1.dp, cardBorder),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                            ) {
+                                Text(
+                                    text = "Replace API Key",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+
+                            OutlinedButton(
+                                onClick = { showDisconnectDialog = true },
+                                shape = RoundedCornerShape(100.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = innerSurfaceBg,
+                                    contentColor = textPrimary
+                                ),
+                                border = BorderStroke(1.dp, cardBorder),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                            ) {
+                                Text(
+                                    text = "Disconnect",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp
+                                    )
                                 )
                             }
                         }
@@ -477,43 +360,220 @@ fun SettingsScreen(
                 }
             }
 
-            // Section 4: Privacy & Cache Control
-            item(key = "privacy_group") {
-                SectionHeader(title = "STORAGE & PRIVACY")
-
+            // Card 2: Appearance
+            item(key = "appearance_card") {
                 OutlinedCard(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-                    ),
+                    colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(18.dp),
+                        modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.PrivacyTip,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Appearance",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            color = textPrimary
+                        )
+
+                        // 3-Segment Theme Selector
+                        Surface(
+                            shape = RoundedCornerShape(100.dp),
+                            color = innerSurfaceBg,
+                            border = BorderStroke(1.dp, cardBorder),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                AppThemeMode.entries.forEach { mode ->
+                                    val isSelected = themeMode == mode
+                                    Surface(
+                                        shape = RoundedCornerShape(100.dp),
+                                        color = if (isSelected) DarkPillActive else Color.Transparent,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .clickable { onSetThemeMode(mode) }
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                if (isSelected) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = FigmaGreenMint,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                }
+                                                Text(
+                                                    text = when (mode) {
+                                                        AppThemeMode.SYSTEM -> "System"
+                                                        AppThemeMode.DARK -> "Dark"
+                                                        AppThemeMode.LIGHT -> "Light"
+                                                    },
+                                                    style = MaterialTheme.typography.labelMedium.copy(
+                                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                        fontSize = 13.sp
+                                                    ),
+                                                    color = if (isSelected) FigmaGreenMint else textMuted
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Card 3: Foreground refresh
+            item(key = "refresh_card") {
+                val isAutoRefreshOn = autoRefreshInterval != AutoRefreshInterval.OFF
+
+                OutlinedCard(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "Zero-Telemetry Guarantee",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface
+                                text = "Foreground refresh",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                ),
+                                color = textPrimary
+                            )
+
+                            Switch(
+                                checked = isAutoRefreshOn,
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        onSetAutoRefreshInterval(AutoRefreshInterval.EVERY_5M)
+                                    } else {
+                                        onSetAutoRefreshInterval(AutoRefreshInterval.OFF)
+                                    }
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = FigmaGreenMint,
+                                    uncheckedThumbColor = textMuted,
+                                    uncheckedTrackColor = cardBorder
+                                )
                             )
                         }
 
                         Text(
-                            text = "Your API key and infrastructure metrics remain strictly on this device. Requests are sent directly to the HetrixTools API without any intermediary proxy or third-party analytics.",
+                            text = "Every 5 min while open · Pauses in background. Respects API limits and retry backoff.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = textMuted,
+                            lineHeight = 18.sp
+                        )
+
+                        // Optional interval selector when enabled
+                        AnimatedVisibility(visible = isAutoRefreshOn) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    AutoRefreshInterval.EVERY_30S to "30s",
+                                    AutoRefreshInterval.EVERY_1M to "1 min",
+                                    AutoRefreshInterval.EVERY_5M to "5 min"
+                                ).forEach { (interval, label) ->
+                                    val isSelected = autoRefreshInterval == interval
+                                    Surface(
+                                        shape = RoundedCornerShape(100.dp),
+                                        color = if (isSelected) DarkPillActive else innerSurfaceBg,
+                                        border = BorderStroke(1.dp, if (isSelected) FigmaGreenAccent else cardBorder),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(34.dp)
+                                            .clickable { onSetAutoRefreshInterval(interval) }
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = label,
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                                ),
+                                                color = if (isSelected) FigmaGreenMint else textMuted
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Card 4: Privacy & local cache
+            item(key = "privacy_card") {
+                OutlinedCard(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = StatusOperationalGreen,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "Privacy & local cache",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                ),
+                                color = textPrimary
+                            )
+                        }
+
+                        Text(
+                            text = "Monitoring cache stays on this device. Clearing it doesn’t remove your credential.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = textMuted,
+                            lineHeight = 18.sp
                         )
 
                         OutlinedButton(
@@ -521,117 +581,104 @@ fun SettingsScreen(
                                 onClearCache()
                                 showCacheClearedDialog = true
                             },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            shape = RoundedCornerShape(100.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = innerSurfaceBg,
+                                contentColor = FigmaGreenMint
+                            ),
+                            border = BorderStroke(1.dp, cardBorder),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CleaningServices,
+                                imageVector = Icons.Default.DeleteOutline,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                tint = FigmaGreenMint,
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Clear Cached Telemetry Data")
+                            Text(
+                                text = "Clear cached data",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                ),
+                                color = FigmaGreenMint
+                            )
                         }
                     }
                 }
             }
 
-            // Section 5: About & Open Source Information
+            // Card 5: About & documentation
             item(key = "about_card") {
-                SectionHeader(title = "ABOUT")
-
                 OutlinedCard(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/etahamad/hetrix-android"))
+                        context.startActivity(intent)
+                    },
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-                    ),
+                    colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+                    border = BorderStroke(1.dp, cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Column {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                                contentDescription = null,
+                                tint = StatusOperationalGreen,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
-                                    text = "HetriX",
-                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    text = "HetrixTools for Android",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp
+                                    ),
+                                    color = textPrimary
                                 )
                                 Text(
-                                    text = "Version 1.0.0 • GNU GPLv3",
+                                    text = "Client-side only · GPL-3.0",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Text(
-                                    text = "Open Source",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    color = textMuted
                                 )
                             }
                         }
 
-                        Text(
-                            text = "Licensed under GNU General Public License v3.0.\nCopyright © 2026 Omar Hamad (etahamad).",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = "Open repository",
+                            tint = textMuted,
+                            modifier = Modifier.size(18.dp)
                         )
-
-                        OutlinedButton(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/etahamad/hetrix-android"))
-                                context.startActivity(intent)
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Code,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("GitHub Repository")
-                            Spacer(modifier = Modifier.weight(1f))
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-
-                        OutlinedButton(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hetrixtools.com/dashboard/"))
-                                context.startActivity(intent)
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("HetrixTools Web Dashboard")
-                        }
                     }
                 }
+            }
+
+            // Footnote safety note
+            item(key = "vault_safety_note") {
+                Text(
+                    text = "Saved credentials are never displayed or copied.",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    color = textMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 12.dp)
+                )
             }
 
             item(key = "bottom_spacer") {
@@ -656,22 +703,36 @@ fun SettingsScreen(
     if (showDisconnectDialog) {
         AlertDialog(
             onDismissRequest = { showDisconnectDialog = false },
-            title = { Text("Disconnect Account?") },
-            text = { Text("This will remove your encrypted API key from this device and return you to the onboarding screen.") },
+            containerColor = cardBg,
+            title = {
+                Text(
+                    text = "Disconnect Account?",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = textPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "This will remove your encrypted API key from this device and return you to the onboarding screen.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textMuted
+                )
+            },
             confirmButton = {
                 Button(
                     onClick = {
                         showDisconnectDialog = false
                         onClearToken()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    shape = RoundedCornerShape(100.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = StatusDownCrimson)
                 ) {
-                    Text("Disconnect")
+                    Text("Disconnect", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDisconnectDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = textMuted)
                 }
             }
         )
@@ -681,28 +742,32 @@ fun SettingsScreen(
     if (showCacheClearedDialog) {
         AlertDialog(
             onDismissRequest = { showCacheClearedDialog = false },
-            title = { Text("Cache Cleared") },
-            text = { Text("In-memory and cached metrics have been purged. Fresh telemetry is now being requested.") },
+            containerColor = cardBg,
+            title = {
+                Text(
+                    text = "Cache Cleared",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = textPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "In-memory and cached metrics have been purged. Fresh telemetry is now being requested.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textMuted
+                )
+            },
             confirmButton = {
-                Button(onClick = { showCacheClearedDialog = false }) {
-                    Text("OK")
+                Button(
+                    onClick = { showCacheClearedDialog = false },
+                    shape = RoundedCornerShape(100.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = FigmaGreenAccent)
+                ) {
+                    Text("OK", fontWeight = FontWeight.Bold)
                 }
             }
         )
     }
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelMedium.copy(
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
-        ),
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -720,7 +785,7 @@ private fun ReplaceApiKeySheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        containerColor = DarkCardBg
     ) {
         Column(
             modifier = Modifier
@@ -731,13 +796,13 @@ private fun ReplaceApiKeySheet(
             Text(
                 text = "Update HetrixTools API Key",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
+                color = DarkTextPrimary
             )
 
             Text(
-                text = "Enter a new HetrixTools v3 API Bearer token. It will be validated before saving to the local hardware-backed KeyStore.",
+                text = "Enter a new HetrixTools v3 API Bearer token. It will be validated directly against the HetrixTools API before saving securely on device.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = DarkTextMuted
             )
 
             OutlinedTextField(
@@ -747,12 +812,14 @@ private fun ReplaceApiKeySheet(
                 placeholder = { Text("e.g. bbe77e9b87adf88fb...") },
                 visualTransformation = if (isKeyVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
+                shape = RoundedCornerShape(14.dp),
                 trailingIcon = {
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { isKeyVisible = !isKeyVisible }) {
                             Icon(
                                 imageVector = if (isKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isKeyVisible) "Hide token" else "Show token"
+                                contentDescription = if (isKeyVisible) "Hide token" else "Show token",
+                                tint = DarkTextMuted
                             )
                         }
                         IconButton(
@@ -764,7 +831,8 @@ private fun ReplaceApiKeySheet(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ContentPaste,
-                                contentDescription = "Paste from clipboard"
+                                contentDescription = "Paste from clipboard",
+                                tint = FigmaGreenMint
                             )
                         }
                     }
@@ -774,7 +842,7 @@ private fun ReplaceApiKeySheet(
                     if (validationError != null) {
                         Text(
                             text = validationError,
-                            color = MaterialTheme.colorScheme.error
+                            color = StatusDownCrimson
                         )
                     }
                 },
@@ -787,28 +855,32 @@ private fun ReplaceApiKeySheet(
             ) {
                 OutlinedButton(
                     onClick = onDismiss,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1f)
+                    shape = RoundedCornerShape(100.dp),
+                    modifier = Modifier.weight(1f).height(48.dp)
                 ) {
-                    Text("Cancel")
+                    Text("Cancel", color = DarkTextMuted)
                 }
 
                 Button(
                     onClick = { onSave(inputKey) },
                     enabled = inputKey.isNotBlank() && !isValidating,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1.5f)
+                    shape = RoundedCornerShape(100.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = FigmaGreenAccent,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.weight(1.5f).height(48.dp)
                 ) {
                     if (isValidating) {
                         CircularProgressIndicator(
                             strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Validating…")
+                        Text("Validating…", fontWeight = FontWeight.Bold)
                     } else {
-                        Text("Validate & Save")
+                        Text("Validate & Save", fontWeight = FontWeight.Bold)
                     }
                 }
             }

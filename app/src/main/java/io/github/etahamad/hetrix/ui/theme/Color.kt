@@ -109,3 +109,15 @@ val StatusOfflineColor = StatusDownCrimson
 val MetricNormalColor = StatusOperationalGreen
 val MetricModerateColor = StatusDegradedAmber
 val MetricCriticalColor = StatusDownCrimson
+
+// Direct Figma token aliases
+val DarkBackground = Color(0xFF0B0F19)
+val DarkCardBg = Color(0xFF1E2638)
+val DarkCardBorder = Color(0xFF303B50)
+val DarkNavBg = Color(0xFF151C2B)
+val DarkPillActive = Color(0xFF12382F)
+val DarkTextPrimary = Color(0xFFF4F7FC)
+val DarkTextMuted = Color(0xFFACB8CC)
+val FigmaGreenAccent = Color(0xFF087F5B)
+val FigmaGreenMint = Color(0xFF61E2B6)
+val StatusDegradedYellow = Color(0xFFF59E0B)
