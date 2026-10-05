@@ -2,48 +2,83 @@ package io.github.etahamad.hetrix.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Brand Colors
-val HetrixPrimary = Color(0xFF38BDF8)
-val HetrixOnPrimary = Color(0xFF003549)
-val HetrixPrimaryContainer = Color(0xFF004D68)
-val HetrixOnPrimaryContainer = Color(0xFFBEE9FF)
+// Primary Colors - Vibrant Tech Cyan / Sky
+val HetrixPrimaryLight = Color(0xFF00668B)
+val HetrixOnPrimaryLight = Color(0xFFFFFFFF)
+val HetrixPrimaryContainerLight = Color(0xFFC3E7FF)
+val HetrixOnPrimaryContainerLight = Color(0xFF001E2D)
 
-val HetrixSecondary = Color(0xFF2DD4BF)
-val HetrixOnSecondary = Color(0xFF003731)
-val HetrixSecondaryContainer = Color(0xFF005047)
-val HetrixOnSecondaryContainer = Color(0xFF73F8E5)
+val HetrixPrimaryDark = Color(0xFF7BD0FF)
+val HetrixOnPrimaryDark = Color(0xFF00354A)
+val HetrixPrimaryContainerDark = Color(0xFF004D6A)
+val HetrixOnPrimaryContainerDark = Color(0xFFC3E7FF)
 
-val HetrixTertiary = Color(0xFFA78BFA)
-val HetrixOnTertiary = Color(0xFF381E72)
-val HetrixTertiaryContainer = Color(0xFF4F378A)
-val HetrixOnTertiaryContainer = Color(0xFFEADBFF)
+// Secondary Colors - Mint Teal
+val HetrixSecondaryLight = Color(0xFF006A60)
+val HetrixOnSecondaryLight = Color(0xFFFFFFFF)
+val HetrixSecondaryContainerLight = Color(0xFF73F8E7)
+val HetrixOnSecondaryContainerLight = Color(0xFF00201C)
 
-val HetrixError = Color(0xFFFFB4AB)
-val HetrixOnError = Color(0xFF690005)
-val HetrixErrorContainer = Color(0xFF93000A)
-val HetrixOnErrorContainer = Color(0xFFFFDAD6)
+val HetrixSecondaryDark = Color(0xFF53DBCB)
+val HetrixOnSecondaryDark = Color(0xFF003731)
+val HetrixSecondaryContainerDark = Color(0xFF005048)
+val HetrixOnSecondaryContainerDark = Color(0xFF73F8E7)
 
-// Dark Theme Surfaces
-val HetrixDarkBackground = Color(0xFF0B1120)
-val HetrixDarkOnBackground = Color(0xFFE2E8F0)
-val HetrixDarkSurface = Color(0xFF0F172A)
-val HetrixDarkOnSurface = Color(0xFFE2E8F0)
-val HetrixDarkSurfaceVariant = Color(0xFF1E293B)
-val HetrixDarkOnSurfaceVariant = Color(0xFF94A3B8)
-val HetrixDarkOutline = Color(0xFF334155)
-val HetrixDarkOutlineVariant = Color(0xFF1E293B)
+// Tertiary Colors - Indigo / Lavender
+val HetrixTertiaryLight = Color(0xFF5A559C)
+val HetrixOnTertiaryLight = Color(0xFFFFFFFF)
+val HetrixTertiaryContainerLight = Color(0xFFE3DFFF)
+val HetrixOnTertiaryContainerLight = Color(0xFF160E5B)
 
-// Light Theme Surfaces
-val HetrixLightBackground = Color(0xFFF8FAFC)
-val HetrixLightOnBackground = Color(0xFF0F172A)
-val HetrixLightSurface = Color(0xFFFFFFFF)
-val HetrixLightOnSurface = Color(0xFF0F172A)
-val HetrixLightSurfaceVariant = Color(0xFFF1F5F9)
-val HetrixLightOnSurfaceVariant = Color(0xFF475569)
-val HetrixLightOutline = Color(0xFFCBD5E1)
-val HetrixLightOutlineVariant = Color(0xFFE2E8F0)
+val HetrixTertiaryDark = Color(0xFFC4C0FF)
+val HetrixOnTertiaryDark = Color(0xFF2B266D)
+val HetrixTertiaryContainerDark = Color(0xFF423D84)
+val HetrixOnTertiaryContainerDark = Color(0xFFE3DFFF)
 
-// Semantic Metric & Status Colors
+// Error Colors
+val HetrixErrorLight = Color(0xFFBA1A1A)
+val HetrixOnErrorLight = Color(0xFFFFFFFF)
+val HetrixErrorContainerLight = Color(0xFFFFDAD6)
+val HetrixOnErrorContainerLight = Color(0xFF410002)
+
+val HetrixErrorDark = Color(0xFFFFB4AB)
+val HetrixOnErrorDark = Color(0xFF690005)
+val HetrixErrorContainerDark = Color(0xFF93000A)
+val HetrixOnErrorContainerDark = Color(0xFFFFDAD6)
+
+// Surface Container Tokens (Dark Theme - Now in Android style)
+val HetrixDarkBackground = Color(0xFF0F141A)
+val HetrixDarkOnBackground = Color(0xFFDFE3EB)
+val HetrixDarkSurface = Color(0xFF0F141A)
+val HetrixDarkOnSurface = Color(0xFFDFE3EB)
+val HetrixDarkSurfaceVariant = Color(0xFF40484F)
+val HetrixDarkOnSurfaceVariant = Color(0xFFBFC8D0)
+val HetrixDarkOutline = Color(0xFF8A929A)
+val HetrixDarkOutlineVariant = Color(0xFF283038)
+
+val HetrixDarkSurfaceContainerLowest = Color(0xFF0A0F14)
+val HetrixDarkSurfaceContainerLow = Color(0xFF131920)
+val HetrixDarkSurfaceContainer = Color(0xFF171E26)
+val HetrixDarkSurfaceContainerHigh = Color(0xFF1D242C)
+val HetrixDarkSurfaceContainerHighest = Color(0xFF232A33)
+
+// Surface Container Tokens (Light Theme)
+val HetrixLightBackground = Color(0xFFF6FAFF)
+val HetrixLightOnBackground = Color(0xFF171C22)
+val HetrixLightSurface = Color(0xFFF6FAFF)
+val HetrixLightOnSurface = Color(0xFF171C22)
+val HetrixLightSurfaceVariant = Color(0xFFDBE4ED)
+val HetrixLightOnSurfaceVariant = Color(0xFF40484F)
+val HetrixLightOutline = Color(0xFF707880)
+val HetrixLightOutlineVariant = Color(0xFFE2E9F0)
+
+val HetrixLightSurfaceContainerLowest = Color(0xFFFFFFFF)
+val HetrixLightSurfaceContainerLow = Color(0xFFEFF4FA)
+val HetrixLightSurfaceContainer = Color(0xFFE9EFF5)
+val HetrixLightSurfaceContainerHigh = Color(0xFFE3E9F0)
+val HetrixLightSurfaceContainerHighest = Color(0xFFDDE3EA)
+
+// Status & Metric Semantic Colors (NiA Palette)
 val StatusOnlineColor = Color(0xFF10B981)
 val StatusOnlineContainer = Color(0xFF064E3B)
 val StatusOnlineContent = Color(0xFF6EE7B7)
@@ -60,7 +95,6 @@ val StatusPausedColor = Color(0xFF64748B)
 val StatusPausedContainer = Color(0xFF1E293B)
 val StatusPausedContent = Color(0xFFCBD5E1)
 
-// Telemetry Metric Scale Colors
 val MetricNormalColor = Color(0xFF10B981)
 val MetricModerateColor = Color(0xFFF59E0B)
 val MetricCriticalColor = Color(0xFFEF4444)

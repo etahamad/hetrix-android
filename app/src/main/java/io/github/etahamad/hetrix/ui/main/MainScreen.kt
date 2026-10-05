@@ -1,8 +1,9 @@
 package io.github.etahamad.hetrix.ui.main
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -30,11 +31,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -44,6 +49,9 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -52,8 +60,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,10 +79,25 @@ import io.github.etahamad.hetrix.data.model.ServerMonitor
 import io.github.etahamad.hetrix.ui.components.EmptyState
 import io.github.etahamad.hetrix.ui.components.ErrorBanner
 import io.github.etahamad.hetrix.ui.components.ServerCard
-import io.github.etahamad.hetrix.ui.settings.SettingsBottomSheet
+import io.github.etahamad.hetrix.ui.metrics.MetricsScreen
+import io.github.etahamad.hetrix.ui.onboarding.OnboardingScreen
+import io.github.etahamad.hetrix.ui.settings.SettingsScreen
 import io.github.etahamad.hetrix.ui.theme.StatusOfflineColor
 import io.github.etahamad.hetrix.ui.theme.StatusOnlineColor
 import io.github.etahamad.hetrix.ui.theme.StatusWarningColor
+
+/**
+ * Navigation tabs matching Now in Android specification.
+ */
+enum class HetrixNavTab(
+    val title: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
+) {
+    MONITORS("Monitors", Icons.Filled.Dns, Icons.Outlined.Dns),
+    METRICS("Metrics", Icons.Filled.Speed, Icons.Outlined.Speed),
+    SETTINGS("Settings", Icons.Filled.Settings, Icons.Outlined.Settings)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,16 +110,126 @@ fun MainScreen(
     val sortOption by viewModel.sortOption.collectAsStateWithLifecycle()
     val filterStatus by viewModel.filterStatus.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val isSettingsOpen by viewModel.isSettingsOpen.collectAsStateWithLifecycle()
     val currentToken by viewModel.currentToken.collectAsStateWithLifecycle()
     val isValidatingToken by viewModel.isValidatingToken.collectAsStateWithLifecycle()
     val tokenValidationError by viewModel.tokenValidationError.collectAsStateWithLifecycle()
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var isSortMenuExpanded by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableStateOf(HetrixNavTab.MONITORS) }
+
+    // If no token is configured, show the high-polish Onboarding Screen
+    if (uiState is MonitorsUiState.NoToken) {
+        OnboardingScreen(
+            isValidating = isValidatingToken,
+            validationError = tokenValidationError,
+            onConnectToken = { token -> viewModel.saveAndValidateToken(token) }
+        )
+        return
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0.dp),
+        bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                tonalElevation = 0.dp,
+                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+            ) {
+                HetrixNavTab.entries.forEach { tab ->
+                    val isSelected = selectedTab == tab
+                    NavigationBarItem(
+                        selected = isSelected,
+                        onClick = { selectedTab = tab },
+                        icon = {
+                            Icon(
+                                imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
+                                contentDescription = tab.title
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = tab.title,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        AnimatedContent(
+            targetState = selectedTab,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "tab_transition",
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) { tab ->
+            when (tab) {
+                HetrixNavTab.MONITORS -> {
+                    MonitorsTabContent(
+                        uiState = uiState,
+                        searchQuery = searchQuery,
+                        sortOption = sortOption,
+                        filterStatus = filterStatus,
+                        isRefreshing = isRefreshing,
+                        onRefresh = { viewModel.loadMonitors(isPullToRefresh = true) },
+                        onSearchQueryChange = viewModel::updateSearchQuery,
+                        onSortChange = viewModel::updateSortOption,
+                        onFilterChange = viewModel::updateFilterStatus,
+                        onOpenSettings = { selectedTab = HetrixNavTab.SETTINGS }
+                    )
+                }
+
+                HetrixNavTab.METRICS -> {
+                    val monitors = (uiState as? MonitorsUiState.Success)?.monitors.orEmpty()
+                    MetricsScreen(
+                        monitors = monitors,
+                        isRefreshing = isRefreshing,
+                        onRefresh = { viewModel.loadMonitors(isPullToRefresh = true) }
+                    )
+                }
+
+                HetrixNavTab.SETTINGS -> {
+                    SettingsScreen(
+                        currentToken = currentToken,
+                        isValidatingToken = isValidatingToken,
+                        tokenValidationError = tokenValidationError,
+                        onSaveToken = { token -> viewModel.saveAndValidateToken(token) },
+                        onClearToken = { viewModel.clearToken() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MonitorsTabContent(
+    uiState: MonitorsUiState,
+    searchQuery: String,
+    sortOption: SortOption,
+    filterStatus: FilterStatus,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onSearchQueryChange: (String) -> Unit,
+    onSortChange: (SortOption) -> Unit,
+    onFilterChange: (FilterStatus) -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    var isSortMenuExpanded by remember { mutableStateOf(false) }
+
+    Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
@@ -106,7 +238,7 @@ fun MainScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "HetriX",
-                            style = MaterialTheme.typography.headlineSmall.copy(
+                            style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 letterSpacing = (-0.5).sp
                             ),
@@ -115,7 +247,7 @@ fun MainScreen(
                         Spacer(modifier = Modifier.width(6.dp))
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
                         ) {
                             Text(
                                 text = "GPLv3",
@@ -130,10 +262,10 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.loadMonitors(isPullToRefresh = true) }) {
+                    IconButton(onClick = onRefresh) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh Monitors",
+                            contentDescription = "Refresh",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -142,7 +274,7 @@ fun MainScreen(
                         IconButton(onClick = { isSortMenuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Sort,
-                                contentDescription = "Sort Monitors",
+                                contentDescription = "Sort",
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -161,25 +293,17 @@ fun MainScreen(
                                         )
                                     },
                                     onClick = {
-                                        viewModel.updateSortOption(option)
+                                        onSortChange(option)
                                         isSortMenuExpanded = false
                                     }
                                 )
                             }
                         }
                     }
-
-                    IconButton(onClick = { viewModel.openSettings() }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
             )
@@ -187,22 +311,12 @@ fun MainScreen(
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = { viewModel.loadMonitors(isPullToRefresh = true) },
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (val state = uiState) {
-                is MonitorsUiState.NoToken -> {
-                    EmptyState(
-                        title = "Welcome to HetriX",
-                        description = "Open-source monitoring client for HetrixTools. Configure your API Bearer token to monitor uptime and server metrics in real-time.",
-                        actionButtonText = "Configure API Token",
-                        onActionClick = { viewModel.openSettings() },
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
+            when (uiState) {
                 is MonitorsUiState.Loading -> {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -216,7 +330,7 @@ fun MainScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = state.message,
+                            text = uiState.message,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -231,55 +345,42 @@ fun MainScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         ErrorBanner(
-                            errorMessage = state.message,
-                            isTokenError = state.isTokenError,
-                            onRetry = { viewModel.loadMonitors(isPullToRefresh = true) },
-                            onOpenSettings = { viewModel.openSettings() }
+                            errorMessage = uiState.message,
+                            isTokenError = uiState.isTokenError,
+                            onRetry = onRefresh,
+                            onOpenSettings = onOpenSettings
                         )
                     }
                 }
 
                 is MonitorsUiState.Success -> {
-                    MonitorsContent(
-                        allMonitors = state.monitors,
-                        filteredMonitors = state.filteredMonitors,
+                    MonitorsListFeed(
+                        allMonitors = uiState.monitors,
+                        filteredMonitors = uiState.filteredMonitors,
                         searchQuery = searchQuery,
                         filterStatus = filterStatus,
-                        onSearchQueryChange = viewModel::updateSearchQuery,
-                        onFilterChange = viewModel::updateFilterStatus,
-                        onOpenSettings = viewModel::openSettings
+                        onSearchQueryChange = onSearchQueryChange,
+                        onFilterChange = onFilterChange
                     )
                 }
 
+                is MonitorsUiState.NoToken,
                 is MonitorsUiState.Initial -> {
-                    // Initial idle state
+                    // Handled upstream
                 }
             }
         }
     }
-
-    if (isSettingsOpen) {
-        SettingsBottomSheet(
-            sheetState = sheetState,
-            currentToken = currentToken,
-            isValidating = isValidatingToken,
-            validationError = tokenValidationError,
-            onDismiss = { viewModel.closeSettings() },
-            onSaveToken = { token -> viewModel.saveAndValidateToken(token) },
-            onClearToken = { viewModel.clearToken() }
-        )
-    }
 }
 
 @Composable
-private fun MonitorsContent(
+private fun MonitorsListFeed(
     allMonitors: List<ServerMonitor>,
     filteredMonitors: List<ServerMonitor>,
     searchQuery: String,
     filterStatus: FilterStatus,
     onSearchQueryChange: (String) -> Unit,
     onFilterChange: (FilterStatus) -> Unit,
-    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -294,7 +395,7 @@ private fun MonitorsContent(
         contentPadding = PaddingValues(
             start = 16.dp,
             end = 16.dp,
-            top = 8.dp,
+            top = 6.dp,
             bottom = 24.dp
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -309,12 +410,12 @@ private fun MonitorsContent(
             )
         }
 
-        // Search Input
+        // Search Input (Now in Android Style)
         item(key = "search_bar") {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = { Text("Search servers, monitors, hostnames…") },
+                placeholder = { Text("Search servers, URLs, hostnames…") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -337,8 +438,8 @@ private fun MonitorsContent(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -371,8 +472,8 @@ private fun MonitorsContent(
         if (filteredMonitors.isEmpty()) {
             item(key = "empty_filter_state") {
                 EmptyState(
-                    title = if (searchQuery.isNotBlank()) "No Matching Servers" else "No Monitors Found",
-                    description = if (searchQuery.isNotBlank()) "No servers or monitors matched \"$searchQuery\"." else "No monitors match the selected filter.",
+                    title = if (searchQuery.isNotBlank()) "No Matching Monitors" else "No Monitors Found",
+                    description = if (searchQuery.isNotBlank()) "No monitors matched \"$searchQuery\"." else "No monitors match the selected filter.",
                     icon = Icons.Default.SearchOff,
                     modifier = Modifier.padding(top = 24.dp)
                 )
@@ -384,11 +485,6 @@ private fun MonitorsContent(
             ) { monitor ->
                 ServerCard(monitor = monitor)
             }
-        }
-
-        // Navigation Bar Spacer
-        item(key = "bottom_nav_spacer") {
-            Spacer(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars))
         }
     }
 }
@@ -402,7 +498,7 @@ private fun SummaryStatusBar(
 ) {
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
