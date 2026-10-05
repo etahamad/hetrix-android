@@ -16,116 +16,134 @@
 
 ## 🚀 Overview
 
-**HetriX** is an open-source, production-grade Android application engineered for DevOps engineers, sysadmins, and webmasters who rely on **HetrixTools** for server monitoring and uptime alerting. 
+**HetriX** is an open-source, production-grade Android application engineered for DevOps engineers, sysadmins, and webmasters who rely on **HetrixTools** for server telemetry, uptime monitoring, and reputation alerting. 
 
-Built with Kotlin and Jetpack Compose Material Design 3, HetriX provides an edge-to-edge mobile experience to monitor servers, uptime heartbeats, ping latency, and server telemetry (CPU, RAM, Swap, and Disk utilization).
-
----
-
-## ✨ Key Features
-
-- 🛰️ **Real-Time Uptime & Heartbeat Monitoring**: Track online/offline status, response times, and uptime ratios across all your HetrixTools monitors.
-- 📊 **Server Agent Telemetry**: Visualize live CPU usage, RAM allocation, Swap memory, and Disk usage via animated progress bars with dynamic color thresholds.
-- 🎨 **Material Design 3 & Dynamic Theming**: Full support for Android 12+ wallpaper dynamic coloring (`dynamicDarkColorScheme` / `dynamicLightColorScheme`), tonal surface elevation, and custom status styling.
-- 🔒 **Hardware-Backed Encryption**: API Bearer tokens are persisted securely using AndroidX Security Crypto (`EncryptedSharedPreferences`) backed by AES-256 GCM MasterKeys.
-- ⚡ **Pull-to-Refresh & Foreground Sync**: Instant synchronization via official Compose M3 `PullToRefreshBox` with smooth refresh animations.
-- 🔍 **Instant Search & Multi-criteria Filtering**: Search by server name, hostname, or IP; filter by Online, Offline, or Agent servers; sort by status, CPU load, latency, or uptime.
-- 🛡️ **Robust Error Handling**: Type-safe network exceptions, friendly banners for HTTP 401/403/429/500 errors, timeout handling, and one-tap retry actions.
-- 📱 **True Edge-to-Edge Experience**: Automatic window insets handling for status and navigation bars across modern Android versions.
+Engineered with Kotlin and Jetpack Compose Material 3 according to modern Android Design Guidelines and the 60-30-10 visual balance rule, HetriX provides a local-first, zero-telemetry client that connects directly to the HetrixTools v3 API with hardware-backed encryption.
 
 ---
 
-## 🏗️ Architecture & Technology Stack
+## ✨ 4-Destination Workspace Architecture
 
-HetriX adheres to Google's official Android Architecture Guidelines, enforcing **Unidirectional Data Flow (UDF)** and clean separation of concerns.
+HetriX is organized into four persistent primary destinations with an edge-to-edge Material 3 layout:
+
+### 1. 🏠 Home — Unified Dashboard & Uptime
+- **Global Health Card**: At-a-glance fleet status with operational and incident variations (e.g. `✓ All Systems Operational` vs `! 2 Outages Detected`).
+- **24-Hour Availability Blocks**: Micro-block visual history (`▰ ▰ ▰`) paired with exact percentages (e.g., `99.98%`).
+- **Real-Time Telemetry**: Real-time response times (ms), last checked timestamps, target URLs/IPs, and check intervals.
+- **Global Location Checks**: Expandable multi-point geographic checks (Dallas, Frankfurt, London, Singapore, Sydney, etc.) with individual status and latency.
+- **Search & Filter**: Search by monitor name or target IP/host, with instant filters for All, Down, and Operational.
+
+### 2. 🖥️ Servers — Cross-Fleet Resource Telemetry
+- **Fleet Aggregate Status**: Fleet-wide average utilization meters for CPU, RAM, and Disk capacity.
+- **Per-Server Metrics Cards**:
+  - **CPU Utilization**: Live gauge + smooth canvas-rendered historical sparkline chart.
+  - **RAM & Disk Breakdown**: Tabular byte gauges displaying exact used vs. total values (e.g., `5.8 / 16.0 GB`).
+  - **Swap Memory**: Expandable auxiliary memory inspection.
+  - **System Vitals**: Load Average (1m / 5m / 15m), OS kernel version, running system uptime, and active open ports.
+  - **Network I/O Throughput**: Live directional throughput rates (`↓ in • ↑ out`).
+
+### 3. 🛡️ Reputation — Blacklist & Microsoft SNDS
+- **Reputation Health Banner**: Instant overview of clean IPs vs active listings across global RBLs and Microsoft SNDS.
+- **Priority Incident Sorting**: Automatically prioritizes listed and degraded IPs at the top (`Listed` → `Warning` → `Unknown` → `Clean`).
+- **Listed Ratio Badges**: Clear `0/32 Listed` or `2/32 Listed` badges with direct links to HetrixTools delisting guides.
+- **Microsoft SNDS Status**: Explicit status indicators (`Clean`, `Warning`, or `Not available`).
+
+### 4. ⚙️ Settings & API Vault
+- **API Vault Card**: Secure local KeyStore AES-256 GCM encrypted token storage with masked preview.
+- **Live Connection Diagnostics**: "Test Connection" tool showing exact ping latency in milliseconds.
+- **Key Management**: Replace API Key modal with clipboard paste support and secure input masking.
+- **Appearance & Preferences**: Switch between System Default, Dark Slate (`#0B0F19`), and Crisp Light (`#FFFFFF`).
+- **Auto-Refresh Scheduling**: Configurable polling intervals (Manual, 30s, 1m, 2m, 5m).
+- **Privacy & Storage**: Clear cached telemetry data and Disconnect actions.
+
+---
+
+## 🎨 Visual System & 60-30-10 Palette
+
+HetriX adheres to a strict 60–30–10 visual hierarchy:
+
+| Role | Dark Mode | Light Mode |
+|---|---|---|
+| **60% Background** | Deep Slate `#0B0F19` | Crisp White `#F8FAFC` |
+| **30% Surfaces & Cards** | Navy-Gray `#1E2638` | Pale Neutral `#FFFFFF` |
+| **10% Operational Accent** | Emerald Green `#10B981` | Emerald Green `#059669` |
+| **10% Degraded / Warning** | Amber `#F59E0B` | Amber `#D97706` |
+| **10% Down / Blacklisted** | Crimson `#EF4444` | Crimson `#DC2626` |
+| **Neutral / Inactive** | Slate `#64748B` | Slate `#94A3B8` |
+
+- **Typography**: Roboto with tabular lining numerals for consistent metric scanning.
+- **Accessibility**: Minimum 48dp touch targets, TalkBack semantics, high-contrast labels, and font scaling support.
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
     subgraph UI_Layer ["🎨 UI Layer (Jetpack Compose M3)"]
         A[MainActivity] --> B[MainScreen]
-        B --> C[ServerCard / MetricBar / StatusBadge]
-        B --> D[SettingsBottomSheet]
+        B --> C[HomeScreen]
+        B --> D[MetricsScreen]
+        B --> E[ReputationScreen]
+        B --> F[SettingsScreen]
+        B --> G[SparklineChart / ServerCard / MetricBar]
     end
 
-    subgraph State_Layer ["🧠 State & Intent Layer"]
-        E[MonitorsViewModel]
-        E -->|StateFlow&lt;MonitorsUiState&gt;| B
-        B -->|User Actions / Refresh / Search| E
+    subgraph State_Layer ["🧠 State & ViewModel Layer"]
+        H[MonitorsViewModel]
+        H -->|StateFlow&lt;MonitorsUiState&gt;| B
+        B -->|User Intents / Refresh / Filters| H
     end
 
     subgraph Data_Layer ["📦 Domain & Repository Layer"]
-        F[MonitorRepository]
-        E --> F
-        F --> G[HetrixApiService]
-        F --> H[EncryptedTokenStorage]
+        I[MonitorRepository]
+        H --> I
+        I --> J[HetrixApiService]
+        I --> K[EncryptedTokenStorage]
     end
 
-    subgraph Network_Layer ["🌐 Network & Local Storage"]
-        G --> I[OkHttp3 + AuthInterceptor]
-        I --> J[HetrixTools API v3]
-        H --> K[Android KeyStore AES-256]
+    subgraph Network_Layer ["🌐 Network & Secure Storage"]
+        J --> L[OkHttp3 + AuthInterceptor]
+        L --> M[HetrixTools API v3]
+        K --> N[Android KeyStore AES-256 GCM]
     end
 ```
-
-### Component Breakdown:
-| Layer | Technologies | Responsibility |
-|---|---|---|
-| **UI** | Jetpack Compose, Material 3, Compose BOM | Renders reactive state, handles edge-to-edge window insets, smooth animations. |
-| **ViewModel** | `androidx.lifecycle:lifecycle-viewmodel-compose`, Kotlin Coroutines | Holds immutable `StateFlow`, coordinates search/sorting, executes background sync. |
-| **Repository** | Kotlin Coroutines `Flow`, Kotlinx Serialization | Manages data retrieval, concurrent telemetry enrichment, and error mapping. |
-| **Network** | Retrofit 2, OkHttp 3, Logging Interceptor | Connects to `https://api.hetrixtools.com/v3/` with custom `AuthInterceptor` and 10s timeouts. |
-| **Security** | `androidx.security:security-crypto` | Safely stores user API Bearer tokens with AES-256 encryption. |
 
 ---
 
 ## 📡 HetrixTools v3 API Integration
 
-HetriX communicates with the official HetrixTools REST API v3:
+HetriX connects directly to the official HetrixTools REST API v3:
 - **Base URL**: `https://api.hetrixtools.com/v3/`
 - **Authentication**: `Authorization: Bearer <API_TOKEN>`
 
-### Connected Endpoints:
-1. `GET /v3/ping` — Validates API token and confirms server availability (`status: "ok", message: "pong"`).
-2. `GET /v3/uptime-monitors` — Retrieves list of uptime/heartbeat monitors, labels, URLs/IPs, status, and uptime percentages.
-3. `GET /v3/uptime-monitors/{monitor_id}/server-agent/metrics` — Retrieves real-time telemetry metrics (CPU %, RAM %, Swap %, Disk %, Load Average).
+### Endpoints:
+1. `GET /v3/ping` — Validates API token and measures latency (`status: "ok", message: "pong"`).
+2. `GET /v3/uptime-monitors` — Retrieves uptime monitors, target hostnames, response times, and location checks.
+3. `GET /v3/uptime-monitors/{id}/server-agent/metrics` — Retrieves CPU, memory breakdown, disk usage, load averages, open ports, and network interfaces.
+4. `GET /v3/blacklist-monitors` — Retrieves blacklist monitors, detected RBL listings, and Microsoft SNDS statuses.
 
 ---
 
 ## 🛠️ Getting Started & Build Instructions
 
 ### Prerequisites
-- Android Studio Ladybug / Meerkat or newer (or IntelliJ IDEA with Android plugin)
+- Android Studio Meerkat (2024.3+) or Ladybug (2024.2+)
 - JDK 17 or JDK 21
-- Android SDK (API 35 compile target, API 26+ device or emulator)
+- Android SDK (API 35 compile target, min SDK API 26)
 
-### Cloning & Building
+### Building the Project
 ```bash
 # Clone the repository
 git clone https://github.com/etahamad/hetrix-android.git
 cd hetrix-android
 
-# Build debug APK
+# Build Debug APK
 ./gradlew assembleDebug
 
-# Run unit test suite
-./gradlew test
+# Run Unit Tests
+./gradlew testDebugUnitTest
 ```
-
-### Generating Release APK / Bundle
-```bash
-./gradlew assembleRelease
-# or for Google Play App Bundle
-./gradlew bundleRelease
-```
-
----
-
-## 🔑 HetrixTools API Setup
-
-1. Log into your [HetrixTools Dashboard](https://hetrixtools.com).
-2. Navigate to **Account Settings** → **API**.
-3. Copy your **v3 API Bearer Token**.
-4. Open **HetriX** on your Android device, tap **Configure API Token** (or the Settings icon in the top app bar), paste your token, and tap **Save & Connect**.
 
 ---
 
@@ -140,48 +158,35 @@ hetrix-android/
 │       ├── main/
 │       │   ├── AndroidManifest.xml
 │       │   ├── java/io/github/etahamad/hetrix/
-│       │   │   ├── HetrixApplication.kt           # App lifecycle & service locator
-│       │   │   ├── MainActivity.kt                # Compose entry point & edge-to-edge
+│       │   │   ├── HetrixApplication.kt
+│       │   │   ├── MainActivity.kt
 │       │   │   ├── data/
-│       │   │   │   ├── api/                       # Retrofit service, interceptors, error mapping
-│       │   │   │   ├── local/                     # EncryptedSharedPreferences token storage
-│       │   │   │   ├── model/                     # Kotlinx Serialization DTOs & Domain entities
-│       │   │   │   └── repository/                # Repository interface & implementation
+│       │   │   │   ├── api/                   # Retrofit service, interceptors, error mapping
+│       │   │   │   ├── local/                 # EncryptedSharedPreferences (AES-256 GCM)
+│       │   │   │   ├── model/                 # Kotlinx Serialization DTOs & Domain mappers
+│       │   │   │   └── repository/            # MonitorRepository & cache management
 │       │   │   └── ui/
-│       │   │       ├── components/                # ServerCard, MetricBar, StatusBadge, ErrorBanner
-│       │   │       ├── main/                      # MainScreen, MonitorsViewModel, MonitorsUiState
-│       │   │       ├── settings/                  # SettingsBottomSheet with token validator
-│       │   │       ├── theme/                     # Material 3 Color, Type, Shape, Theme
-│       │   │       └── util/                      # Time formatting and ViewModel factories
-│       │   └── res/                               # Vector assets, themes, and string definitions
-│       └── test/                                  # Repository & ViewModel unit tests
+│       │   │       ├── components/            # SparklineChart, ServerCard, MetricBar, StatusBadge
+│       │   │       ├── home/                  # HomeScreen (Global Health, Uptime, Micro-blocks)
+│       │   │       ├── metrics/               # MetricsScreen (Cross-fleet telemetry, Sparklines)
+│       │   │       ├── reputation/            # ReputationScreen (RBL Blacklists, SNDS)
+│       │   │       ├── settings/              # SettingsScreen (API Vault, Diagnostics, Theming)
+│       │   │       ├── main/                  # MainScreen (4-tab Navigation, ViewModel, State)
+│       │   │       ├── theme/                 # 60-30-10 Palette, Typography, Shapes
+│       │   │       └── util/                  # Byte formatting, time utils, ViewModelFactory
+│       │   └── res/                           # Vector icons, app icons, strings
+│       └── test/                              # Repository & ViewModel unit test suites
 ├── gradle/
-│   └── libs.versions.toml                         # Gradle Version Catalog
-├── build.gradle.kts                               # Root build script
-├── settings.gradle.kts                            # Settings & module declaration
-├── LICENSE                                        # GNU General Public License v3.0
-└── README.md                                      # Documentation
+│   └── libs.versions.toml                     # Version catalog
+├── LICENSE                                    # GNU General Public License v3.0
+└── README.md                                  # Documentation
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions, bug reports, and feature suggestions are welcome!
-
-1. Fork the Project: `https://github.com/etahamad/hetrix-android`
-2. Create your Feature Branch: `git checkout -b feature/AmazingFeature`
-3. Commit your Changes: `git commit -m 'Add some AmazingFeature'`
-4. Push to the Branch: `git push origin feature/AmazingFeature`
-5. Open a Pull Request targeting the `main` branch.
-
-Please ensure all tests pass (`./gradlew test`) before submitting a PR.
 
 ---
 
 ## 📄 License
 
-Distributed under the **GNU General Public License v3.0 (GPLv3)**. See [`LICENSE`](LICENSE) for the full license text.
+Distributed under the **GNU General Public License v3.0 (GPLv3)**. See [`LICENSE`](LICENSE) for details.
 
 ```
 HetriX  Copyright (C) 2026 Omar Hamad (etahamad)

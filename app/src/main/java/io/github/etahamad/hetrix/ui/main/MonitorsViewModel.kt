@@ -3,26 +3,33 @@ package io.github.etahamad.hetrix.ui.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.etahamad.hetrix.data.api.NetworkException
+import io.github.etahamad.hetrix.data.model.BlacklistMonitor
 import io.github.etahamad.hetrix.data.model.MonitorStatus
+import io.github.etahamad.hetrix.data.model.ReputationStatus
 import io.github.etahamad.hetrix.data.model.ServerMonitor
 import io.github.etahamad.hetrix.data.repository.MonitorRepository
+import io.github.etahamad.hetrix.ui.theme.AppThemeMode
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel orchestrating HetriX monitor dashboard state, user interactions, and token configuration.
+ * Main ViewModel managing all four destinations: Home, Servers, Reputation, and Settings.
  */
 class MonitorsViewModel(
     private val repository: MonitorRepository
 ) : ViewModel() {
 
     private val _rawMonitors = MutableStateFlow<List<ServerMonitor>>(emptyList())
+    private val _rawBlacklist = MutableStateFlow<List<BlacklistMonitor>>(emptyList())
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -32,11 +39,19 @@ class MonitorsViewModel(
     private val _filterStatus = MutableStateFlow(FilterStatus.ALL)
     val filterStatus: StateFlow<FilterStatus> = _filterStatus.asStateFlow()
 
+    private val _reputationFilter = MutableStateFlow(ReputationFilter.ALL)
+    val reputationFilter: StateFlow<ReputationFilter> = _reputationFilter.asStateFlow()
+
+    private val _themeMode = MutableStateFlow(AppThemeMode.DARK)
+    val themeMode: StateFlow<AppThemeMode> = _themeMode.asStateFlow()
+
+    private val _autoRefreshInterval = MutableStateFlow(AutoRefreshInterval.OFF)
+    val autoRefreshInterval: StateFlow<AutoRefreshInterval> = _autoRefreshInterval.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val _isSettingsOpen = MutableStateFlow(false)
-    val isSettingsOpen: StateFlow<Boolean> = _isSettingsOpen.asStateFlow()
+    private val _isLoading = MutableStateFlow(false)
 
     private val _isValidatingToken = MutableStateFlow(false)
     val isValidatingToken: StateFlow<Boolean> = _isValidatingToken.asStateFlow()
@@ -44,17 +59,25 @@ class MonitorsViewModel(
     private val _tokenValidationError = MutableStateFlow<String?>(null)
     val tokenValidationError: StateFlow<String?> = _tokenValidationError.asStateFlow()
 
+    private val _connectionTestResult = MutableStateFlow<String?>(null)
+    val connectionTestResult: StateFlow<String?> = _connectionTestResult.asStateFlow()
+
+    private val _isTestingConnection = MutableStateFlow(false)
+    val isTestingConnection: StateFlow<Boolean> = _isTestingConnection.asStateFlow()
+
     private val _errorState = MutableStateFlow<MonitorsUiState.Error?>(null)
-    private val _isLoading = MutableStateFlow(false)
 
     val currentToken: StateFlow<String?> = repository.tokenFlow
+    val lastSyncTimestamp: StateFlow<Long?> = repository.lastSyncTimestamp
 
     private var loadJob: Job? = null
+    private var autoRefreshJob: Job? = null
 
     private data class FilterParams(
         val query: String,
         val sort: SortOption,
-        val filter: FilterStatus
+        val filter: FilterStatus,
+        val repFilter: ReputationFilter
     )
 
     private data class SyncState(
@@ -63,8 +86,8 @@ class MonitorsViewModel(
         val error: MonitorsUiState.Error?
     )
 
-    private val filterParamsFlow = combine(_searchQuery, _sortOption, _filterStatus) { query, sort, filter ->
-        FilterParams(query, sort, filter)
+    private val filterParamsFlow = combine(_searchQuery, _sortOption, _filterStatus, _reputationFilter) { query, sort, filter, repFilter ->
+        FilterParams(query, sort, filter, repFilter)
     }
 
     private val syncStateFlow = combine(_isLoading, _isRefreshing, _errorState) { loading, refreshing, error ->
@@ -74,13 +97,14 @@ class MonitorsViewModel(
     val uiState: StateFlow<MonitorsUiState> = combine(
         repository.tokenFlow,
         _rawMonitors,
+        _rawBlacklist,
         filterParamsFlow,
         syncStateFlow
-    ) { token, monitors, filterParams, syncState ->
+    ) { token, monitors, blacklist, filterParams, syncState ->
         when {
             token.isNullOrBlank() -> MonitorsUiState.NoToken
             syncState.error != null -> syncState.error.copy(isRefreshing = syncState.isRefreshing)
-            syncState.isLoading && monitors.isEmpty() -> MonitorsUiState.Loading()
+            syncState.isLoading && monitors.isEmpty() && blacklist.isEmpty() -> MonitorsUiState.Loading()
             else -> {
                 val filtered = filterAndSortMonitors(
                     monitors = monitors,
@@ -91,6 +115,7 @@ class MonitorsViewModel(
                 MonitorsUiState.Success(
                     monitors = monitors,
                     filteredMonitors = filtered,
+                    blacklistMonitors = blacklist,
                     isRefreshing = syncState.isRefreshing,
                     lastRefreshedTimestamp = System.currentTimeMillis()
                 )
@@ -103,23 +128,23 @@ class MonitorsViewModel(
     )
 
     init {
-        // Automatically load monitors when token changes or is first initialized
         viewModelScope.launch {
             repository.tokenFlow.collect { token ->
                 if (!token.isNullOrBlank()) {
-                    loadMonitors(isPullToRefresh = false)
+                    loadAllData(isPullToRefresh = false)
+                    restartAutoRefresh()
                 } else {
                     _rawMonitors.value = emptyList()
+                    _rawBlacklist.value = emptyList()
                     _errorState.value = null
+                    autoRefreshJob?.cancel()
                 }
             }
         }
     }
 
-    fun loadMonitors(isPullToRefresh: Boolean = false) {
-        if (!repository.hasToken()) {
-            return
-        }
+    fun loadAllData(isPullToRefresh: Boolean = false) {
+        if (!repository.hasToken()) return
 
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
@@ -130,31 +155,47 @@ class MonitorsViewModel(
             }
             _errorState.value = null
 
-            repository.getMonitors(fetchLiveMetrics = true).collect { result ->
-                _isLoading.value = false
-                _isRefreshing.value = false
-
-                result.onSuccess { monitors ->
-                    _rawMonitors.value = monitors
-                    _errorState.value = null
-                }.onFailure { error ->
-                    val isAuthError = error is NetworkException.UnauthorizedException ||
-                            error is NetworkException.ForbiddenException ||
-                            error is NetworkException.MissingTokenException
-
-                    val message = when (error) {
-                        is NetworkException -> error.message
-                        else -> error.localizedMessage ?: "Failed to synchronize monitors."
+            // Launch uptime monitors and blacklist monitors concurrently
+            launch {
+                repository.getMonitors(fetchLiveMetrics = true).collect { result ->
+                    result.onSuccess { monitors ->
+                        _rawMonitors.value = monitors
+                        _errorState.value = null
+                    }.onFailure { error ->
+                        handleError(error)
                     }
-
-                    _errorState.value = MonitorsUiState.Error(
-                        message = message,
-                        isTokenError = isAuthError,
-                        isRefreshing = false
-                    )
                 }
             }
+
+            launch {
+                repository.getBlacklistMonitors().collect { result ->
+                    result.onSuccess { bl ->
+                        _rawBlacklist.value = bl
+                    }
+                }
+            }
+
+            _isLoading.value = false
+            _isRefreshing.value = false
         }
+    }
+
+    private fun handleError(error: Throwable) {
+        val isAuthError = error is NetworkException.UnauthorizedException ||
+                error is NetworkException.ForbiddenException ||
+                error is NetworkException.MissingTokenException
+
+        val message = when (error) {
+            is NetworkException -> error.message
+            else -> error.localizedMessage ?: "Failed to synchronize monitors."
+        }
+
+        _errorState.value = MonitorsUiState.Error(
+            message = message,
+            isTokenError = isAuthError,
+            isRefreshing = false,
+            cachedMonitors = _rawMonitors.value.ifEmpty { null }
+        )
     }
 
     fun updateSearchQuery(query: String) {
@@ -169,14 +210,44 @@ class MonitorsViewModel(
         _filterStatus.value = status
     }
 
-    fun openSettings() {
-        _tokenValidationError.value = null
-        _isSettingsOpen.value = true
+    fun updateReputationFilter(filter: ReputationFilter) {
+        _reputationFilter.value = filter
     }
 
-    fun closeSettings() {
-        _tokenValidationError.value = null
-        _isSettingsOpen.value = false
+    fun setThemeMode(mode: AppThemeMode) {
+        _themeMode.value = mode
+    }
+
+    fun setAutoRefreshInterval(interval: AutoRefreshInterval) {
+        _autoRefreshInterval.value = interval
+        restartAutoRefresh()
+    }
+
+    private fun restartAutoRefresh() {
+        autoRefreshJob?.cancel()
+        val intervalSec = _autoRefreshInterval.value.intervalSeconds
+        if (intervalSec <= 0L || !repository.hasToken()) return
+
+        autoRefreshJob = viewModelScope.launch {
+            while (isActive) {
+                delay(intervalSec * 1000L)
+                loadAllData(isPullToRefresh = false)
+            }
+        }
+    }
+
+    fun testConnection() {
+        viewModelScope.launch {
+            _isTestingConnection.value = true
+            _connectionTestResult.value = null
+            val result = repository.testConnection()
+            _isTestingConnection.value = false
+            result.onSuccess { latency ->
+                _connectionTestResult.value = "Connection OK • Latency: ${latency}ms"
+            }.onFailure { err ->
+                _connectionTestResult.value = "Test Failed: ${err.localizedMessage ?: "Unreachable"}"
+            }
+        }
     }
 
     fun saveAndValidateToken(token: String) {
@@ -195,12 +266,11 @@ class MonitorsViewModel(
 
             validationResult.onSuccess {
                 repository.saveToken(cleanToken)
-                _isSettingsOpen.value = false
                 _tokenValidationError.value = null
             }.onFailure { error ->
                 _tokenValidationError.value = when (error) {
                     is NetworkException.UnauthorizedException -> "Invalid API Token. HetrixTools rejected this token."
-                    is NetworkException.ForbiddenException -> "Access denied. Check your HetrixTools plan permissions."
+                    is NetworkException.ForbiddenException -> "Access denied. Check your HetrixTools permissions."
                     is NetworkException.NoConnectivityException -> "Network offline. Unable to reach HetrixTools API."
                     is NetworkException.TimeoutException -> "Connection timed out during validation."
                     else -> error.localizedMessage ?: "Token validation failed. Please check credentials."
@@ -213,8 +283,14 @@ class MonitorsViewModel(
         viewModelScope.launch {
             repository.clearToken()
             _rawMonitors.value = emptyList()
+            _rawBlacklist.value = emptyList()
             _errorState.value = null
         }
+    }
+
+    fun clearCache() {
+        repository.clearCachedData()
+        loadAllData(isPullToRefresh = true)
     }
 
     private fun filterAndSortMonitors(
@@ -242,7 +318,6 @@ class MonitorsViewModel(
         return when (sort) {
             SortOption.STATUS -> filtered.sortedWith(
                 compareBy<ServerMonitor> {
-                    // Offline and warning items first
                     when (it.status) {
                         MonitorStatus.OFFLINE -> 0
                         MonitorStatus.WARNING -> 1

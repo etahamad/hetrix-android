@@ -4,6 +4,7 @@ import io.github.etahamad.hetrix.data.api.HetrixApiService
 import io.github.etahamad.hetrix.data.api.NetworkException
 import io.github.etahamad.hetrix.data.local.TokenStorage
 import io.github.etahamad.hetrix.data.model.AgentMetricsPointDto
+import io.github.etahamad.hetrix.data.model.BlacklistMonitorsResponseDto
 import io.github.etahamad.hetrix.data.model.MonitorDto
 import io.github.etahamad.hetrix.data.model.MonitorStatus
 import io.github.etahamad.hetrix.data.model.PingResponseDto
@@ -126,7 +127,7 @@ class MonitorRepositoryTest {
     fun getMetricsForMonitor_returnsDomainMetrics_whenSuccessful() = runTest {
         fakeApiService.metricsResponse = Response.success(
             ServerAgentMetricsResponseDto(
-                metrics = listOf(
+                stats = listOf(
                     AgentMetricsPointDto(
                         cpuUsage = 42.5,
                         ramUsage = 68.2,
@@ -168,6 +169,7 @@ class MonitorRepositoryTest {
         var pingResponse: Response<PingResponseDto> = Response.success(PingResponseDto(status = "ok", message = "pong"))
         var monitorsResponse: Response<UptimeMonitorsResponseDto> = Response.success(UptimeMonitorsResponseDto())
         var metricsResponse: Response<ServerAgentMetricsResponseDto> = Response.success(ServerAgentMetricsResponseDto())
+        var blacklistResponse: Response<BlacklistMonitorsResponseDto> = Response.success(BlacklistMonitorsResponseDto())
 
         override suspend fun ping(authOverride: String?): Response<PingResponseDto> {
             return pingResponse
@@ -179,6 +181,10 @@ class MonitorRepositoryTest {
 
         override suspend fun getServerAgentMetrics(monitorId: String, authOverride: String?): Response<ServerAgentMetricsResponseDto> {
             return metricsResponse
+        }
+
+        override suspend fun getBlacklistMonitors(authOverride: String?): Response<BlacklistMonitorsResponseDto> {
+            return blacklistResponse
         }
     }
 }

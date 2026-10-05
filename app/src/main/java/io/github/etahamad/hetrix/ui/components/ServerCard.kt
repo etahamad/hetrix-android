@@ -24,12 +24,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -59,6 +63,7 @@ import io.github.etahamad.hetrix.data.model.ServerMonitor
 import io.github.etahamad.hetrix.ui.theme.StatusOfflineColor
 import io.github.etahamad.hetrix.ui.theme.StatusOnlineColor
 import io.github.etahamad.hetrix.ui.theme.StatusWarningColor
+import io.github.etahamad.hetrix.ui.util.FormatUtils
 import io.github.etahamad.hetrix.ui.util.TimeFormatter
 import java.util.Locale
 
@@ -222,26 +227,39 @@ fun ServerCard(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
+                val m = monitor.metrics
+                val ramUsed = m.ramSizeBytes?.let { (it * (m.ramPercent / 100.0)).toLong() }
+                val ramStr = if (ramUsed != null && m.ramSizeBytes > 0) {
+                    "${FormatUtils.formatBytes(ramUsed)} / ${FormatUtils.formatBytes(m.ramSizeBytes)} (${String.format(Locale.US, "%.1f%%", m.ramPercent)})"
+                } else null
+
+                val diskStr = if (m.diskUsedBytes != null && m.diskSizeBytes != null) {
+                    "${FormatUtils.formatBytes(m.diskUsedBytes)} / ${FormatUtils.formatBytes(m.diskSizeBytes)} (${String.format(Locale.US, "%.1f%%", m.diskPercent)})"
+                } else null
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     MetricBar(
                         label = "CPU Usage",
-                        valuePercent = monitor.metrics.cpuPercent
+                        valuePercent = m.cpuPercent,
+                        valueText = String.format(Locale.US, "%.2f%%", m.cpuPercent)
                     )
                     MetricBar(
                         label = "RAM Usage",
-                        valuePercent = monitor.metrics.ramPercent
+                        valuePercent = m.ramPercent,
+                        valueText = ramStr
                     )
                     MetricBar(
-                        label = "Disk Storage",
-                        valuePercent = monitor.metrics.diskPercent
+                        label = "Disk Storage (${m.diskMount ?: "/"})",
+                        valuePercent = m.diskPercent,
+                        valueText = diskStr
                     )
                 }
             }
 
-            // Expandable Details Section (Swap, Load Average, Worldwide Checks, Host IP)
+            // Expandable Details Section (Hardware, Network, Location Checks, Host IP)
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = fadeIn() + expandVertically(),
@@ -260,32 +278,102 @@ fun ServerCard(
 
                     // Extra Server Metrics (Swap & Load)
                     if (monitor.metrics != null) {
-                        monitor.metrics.swapPercent?.let { swap ->
+                        val m = monitor.metrics
+                        m.swapPercent?.let { swap ->
+                            val swapStr = m.swapSizeBytes?.let {
+                                val used = (it * (swap / 100.0)).toLong()
+                                "${FormatUtils.formatBytes(used)} / ${FormatUtils.formatBytes(it)} (${String.format(Locale.US, "%.1f%%", swap)})"
+                            }
                             MetricBar(
                                 label = "Swap Memory",
-                                valuePercent = swap
+                                valuePercent = swap,
+                                valueText = swapStr
                             )
                         }
 
-                        monitor.metrics.loadAverage?.let { load ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                        // Hardware & System info box
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    text = "Load Average (1m, 5m, 15m)",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = load,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontFamily = FontFamily.Monospace,
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+                                m.cpuModel?.let { model ->
+                                    ServerInfoRow(
+                                        icon = Icons.Default.DeveloperBoard,
+                                        label = "Processor",
+                                        value = "$model${m.cpuCores?.let { " ($it Cores)" } ?: ""}"
+                                    )
+                                }
+
+                                m.systemUptimeSeconds?.let { uptime ->
+                                    ServerInfoRow(
+                                        icon = Icons.Default.Schedule,
+                                        label = "System Uptime",
+                                        value = FormatUtils.formatUptime(uptime)
+                                    )
+                                }
+
+                                m.operatingSystem?.let { os ->
+                                    ServerInfoRow(
+                                        icon = Icons.Default.Terminal,
+                                        label = "OS / Kernel",
+                                        value = "$os${m.kernel?.let { " • $it" } ?: ""}"
+                                    )
+                                }
+
+                                m.loadAverage?.let { load ->
+                                    ServerInfoRow(
+                                        icon = Icons.Default.Speed,
+                                        label = "Load Average",
+                                        value = load,
+                                        isMonospace = true
+                                    )
+                                }
+
+                                if (m.networkInBps != null || m.networkOutBps != null) {
+                                    ServerInfoRow(
+                                        icon = Icons.Default.Lan,
+                                        label = "Throughput (${m.networkInterfaceName ?: "NIC"})",
+                                        value = "↓ ${FormatUtils.formatNetworkThroughput(m.networkInBps)} • ↑ ${FormatUtils.formatNetworkThroughput(m.networkOutBps)}",
+                                        isMonospace = true
+                                    )
+                                }
+                            }
+                        }
+
+                        // Open Ports
+                        if (m.openPorts.isNotEmpty()) {
+                            Text(
+                                text = "Active Port Connections",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                m.openPorts.forEach { port ->
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest
+                                    ) {
+                                        Text(
+                                            text = "Port $port",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontFamily = FontFamily.Monospace,
+                                                fontWeight = FontWeight.Medium,
+                                                fontSize = 10.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -315,7 +403,10 @@ fun ServerCard(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.LocationOn,
                                     contentDescription = "Host IP",
@@ -329,11 +420,14 @@ fun ServerCard(
                                         fontFamily = FontFamily.Monospace,
                                         fontWeight = FontWeight.Medium
                                     ),
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
 
                             monitor.resolveInfo?.let { info ->
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = info,
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
@@ -434,5 +528,53 @@ private fun StatPill(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Composable
+private fun ServerInfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    isMonospace: Boolean = false
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(13.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 10.5.sp
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

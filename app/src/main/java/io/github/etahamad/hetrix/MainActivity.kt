@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.etahamad.hetrix.ui.main.MainScreen
 import io.github.etahamad.hetrix.ui.main.MonitorsViewModel
 import io.github.etahamad.hetrix.ui.theme.HetrixTheme
@@ -20,7 +22,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            HetrixTheme {
+            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+
+            HetrixTheme(themeMode = themeMode) {
                 MainScreen(viewModel = viewModel)
             }
         }

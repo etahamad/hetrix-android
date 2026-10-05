@@ -14,6 +14,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+enum class AppThemeMode(val title: String) {
+    SYSTEM("System Default"),
+    DARK("Dark (Deep Slate)"),
+    LIGHT("Light (Crisp Slate)")
+}
+
 private val DarkColorScheme = darkColorScheme(
     primary = HetrixPrimaryDark,
     onPrimary = HetrixOnPrimaryDark,
@@ -80,16 +86,23 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun HetrixTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    themeMode: AppThemeMode = AppThemeMode.DARK,
+    dynamicColor: Boolean = false, // Default to true HetrixTools brand palette
     content: @Composable () -> Unit
 ) {
+    val isSystemDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        AppThemeMode.SYSTEM -> isSystemDark
+        AppThemeMode.DARK -> true
+        AppThemeMode.LIGHT -> false
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
+        isDark -> DarkColorScheme
         else -> LightColorScheme
     }
 
@@ -99,8 +112,8 @@ fun HetrixTheme(
             val window = (view.context as? Activity)?.window
             if (window != null) {
                 WindowCompat.getInsetsController(window, view).apply {
-                    isAppearanceLightStatusBars = !darkTheme
-                    isAppearanceLightNavigationBars = !darkTheme
+                    isAppearanceLightStatusBars = !isDark
+                    isAppearanceLightNavigationBars = !isDark
                 }
             }
         }

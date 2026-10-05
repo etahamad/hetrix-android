@@ -1,20 +1,23 @@
 package io.github.etahamad.hetrix.ui
 
 import io.github.etahamad.hetrix.data.api.NetworkException
+import io.github.etahamad.hetrix.data.model.BlacklistMonitor
 import io.github.etahamad.hetrix.data.model.MonitorStatus
+import io.github.etahamad.hetrix.data.model.ReputationStatus
 import io.github.etahamad.hetrix.data.model.ServerMetrics
 import io.github.etahamad.hetrix.data.model.ServerMonitor
+import io.github.etahamad.hetrix.data.model.SndsStatus
 import io.github.etahamad.hetrix.data.repository.MonitorRepository
 import io.github.etahamad.hetrix.ui.main.FilterStatus
 import io.github.etahamad.hetrix.ui.main.MonitorsUiState
 import io.github.etahamad.hetrix.ui.main.MonitorsViewModel
+import io.github.etahamad.hetrix.ui.main.ReputationFilter
 import io.github.etahamad.hetrix.ui.main.SortOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -25,7 +28,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -193,7 +196,8 @@ class MonitorsViewModelTest {
         advanceUntilIdle()
 
         assertEquals("new_valid_token", fakeRepository.tokenFlow.value)
-        assertFalse(viewModel.isSettingsOpen.value)
+        assertNull(viewModel.tokenValidationError.value)
+        job.cancel()
     }
 
     // --- Fake Repository ---
@@ -202,7 +206,11 @@ class MonitorsViewModelTest {
         private val _tokenFlow = MutableStateFlow<String?>(null)
         override val tokenFlow: StateFlow<String?> = _tokenFlow
 
+        private val _syncFlow = MutableStateFlow<Long?>(System.currentTimeMillis())
+        override val lastSyncTimestamp: StateFlow<Long?> = _syncFlow
+
         var monitors: List<ServerMonitor> = emptyList()
+        var blacklist: List<BlacklistMonitor> = emptyList()
         var shouldFailValidation: Boolean = false
 
         fun setToken(token: String?) {
@@ -231,8 +239,20 @@ class MonitorsViewModelTest {
             return flowOf(Result.success(monitors))
         }
 
+        override fun getBlacklistMonitors(): Flow<Result<List<BlacklistMonitor>>> {
+            return flowOf(Result.success(blacklist))
+        }
+
         override suspend fun getMetricsForMonitor(monitorId: String): Result<ServerMetrics> {
             return Result.success(ServerMetrics(10f, 20f, null, 30f, null, 1700000000L))
+        }
+
+        override suspend fun testConnection(): Result<Long> {
+            return Result.success(45L)
+        }
+
+        override fun clearCachedData() {
+            // No-op for fake
         }
     }
 }

@@ -189,14 +189,184 @@ data class ServerAgentMetricsResponseDto(
     @SerialName("status")
     val status: String? = null,
 
+    @SerialName("message")
+    val message: String? = null,
+
+    @SerialName("agent")
+    val agent: AgentInfoDto? = null,
+
+    @SerialName("system")
+    val system: SystemInfoDto? = null,
+
+    @SerialName("cpu")
+    val cpu: CpuInfoDto? = null,
+
+    @SerialName("memory")
+    val memory: MemoryInfoDto? = null,
+
+    @SerialName("disk")
+    val disk: DiskContainerDto? = null,
+
+    @SerialName("network_interfaces")
+    val networkInterfaces: List<NetworkInterfaceDto> = emptyList(),
+
+    @SerialName("port_connections")
+    val portConnections: List<PortConnectionDto> = emptyList(),
+
+    @SerialName("stats")
+    val stats: List<AgentMetricsPointDto> = emptyList(),
+
     @SerialName("metrics")
-    val metrics: List<AgentMetricsPointDto> = emptyList(),
+    val legacyMetrics: List<AgentMetricsPointDto> = emptyList(),
 
     @SerialName("data")
-    val data: List<AgentMetricsPointDto> = emptyList(),
+    val legacyData: List<AgentMetricsPointDto> = emptyList(),
 
-    @SerialName("message")
-    val message: String? = null
+    @SerialName("meta")
+    val meta: MetricsMetaDto? = null
+) {
+    val allStats: List<AgentMetricsPointDto>
+        get() = when {
+            stats.isNotEmpty() -> stats
+            legacyMetrics.isNotEmpty() -> legacyMetrics
+            legacyData.isNotEmpty() -> legacyData
+            else -> emptyList()
+        }
+}
+
+@Serializable
+data class AgentInfoDto(
+    @SerialName("id")
+    val id: String? = null,
+
+    @SerialName("version")
+    val version: String? = null,
+
+    @SerialName("type")
+    val type: String? = null,
+
+    @SerialName("ip_address")
+    val ipAddress: String? = null,
+
+    @SerialName("date_added")
+    val dateAdded: Long? = null
+)
+
+@Serializable
+data class SystemInfoDto(
+    @SerialName("hostname")
+    val hostname: String? = null,
+
+    @SerialName("operating_system")
+    val operatingSystem: String? = null,
+
+    @SerialName("kernel")
+    val kernel: String? = null,
+
+    @SerialName("uptime")
+    val uptime: Long? = null,
+
+    @SerialName("reboot_required")
+    val rebootRequired: Boolean? = null
+)
+
+@Serializable
+data class CpuInfoDto(
+    @SerialName("model")
+    val model: String? = null,
+
+    @SerialName("speed")
+    val speedMhz: Int? = null,
+
+    @SerialName("sockets")
+    val sockets: Int? = null,
+
+    @SerialName("cores")
+    val cores: Int? = null,
+
+    @SerialName("threads")
+    val threads: Int? = null
+)
+
+@Serializable
+data class MemoryInfoDto(
+    @SerialName("ram_size")
+    val ramSizeBytes: Long? = null,
+
+    @SerialName("swap_size")
+    val swapSizeBytes: Long? = null
+)
+
+@Serializable
+data class DiskContainerDto(
+    @SerialName("total_size")
+    val totalSizeBytes: Long? = null,
+
+    @SerialName("disks")
+    val disks: List<SingleDiskDto> = emptyList()
+)
+
+@Serializable
+data class SingleDiskDto(
+    @SerialName("mount")
+    val mount: String? = null,
+
+    @SerialName("size")
+    val sizeBytes: Long? = null,
+
+    @SerialName("used")
+    val usedBytes: Long? = null,
+
+    @SerialName("available")
+    val availableBytes: Long? = null,
+
+    @SerialName("usage_percent")
+    val usagePercent: Double? = null,
+
+    @SerialName("io_read")
+    val ioRead: Long? = null,
+
+    @SerialName("io_write")
+    val ioWrite: Long? = null,
+
+    @SerialName("inodes")
+    val inodes: Long? = null,
+
+    @SerialName("inodes_used")
+    val inodesUsed: Long? = null
+)
+
+@Serializable
+data class NetworkInterfaceDto(
+    @SerialName("name")
+    val name: String? = null,
+
+    @SerialName("net_in")
+    val netInBps: Long? = null,
+
+    @SerialName("net_out")
+    val netOutBps: Long? = null,
+
+    @SerialName("ipv4")
+    val ipv4: List<String> = emptyList(),
+
+    @SerialName("ipv6")
+    val ipv6: List<String> = emptyList()
+)
+
+@Serializable
+data class PortConnectionDto(
+    @SerialName("port")
+    val port: Int? = null,
+
+    @SerialName("connections")
+    val connections: Int? = null
+)
+
+@Serializable
+data class MetricsMetaDto(
+    @SerialName("last_updated")
+    val lastUpdated: Long? = null
 )
 
 /**
@@ -210,14 +380,20 @@ data class AgentMetricsPointDto(
     @SerialName("cpu")
     val cpuUsage: Double? = null,
 
-    @SerialName("ram")
-    val ramUsage: Double? = null,
+    @SerialName("iowait")
+    val ioWait: Double? = null,
 
-    @SerialName("swap")
-    val swapUsage: Double? = null,
+    @SerialName("steal")
+    val steal: Double? = null,
 
-    @SerialName("disk")
-    val diskUsage: Double? = null,
+    @SerialName("user")
+    val user: Double? = null,
+
+    @SerialName("system")
+    val system: Double? = null,
+
+    @SerialName("cpu_temp")
+    val cpuTemp: Double? = null,
 
     @SerialName("load_1")
     val load1: Double? = null,
@@ -228,11 +404,26 @@ data class AgentMetricsPointDto(
     @SerialName("load_15")
     val load15: Double? = null,
 
+    @SerialName("ram")
+    val ramUsage: Double? = null,
+
+    @SerialName("swap")
+    val swapUsage: Double? = null,
+
+    @SerialName("buffered")
+    val buffered: Double? = null,
+
+    @SerialName("cached")
+    val cached: Double? = null,
+
+    @SerialName("disk")
+    val diskUsage: Double? = null,
+
     @SerialName("net_in")
-    val netIn: Double? = null,
+    val netIn: Long? = null,
 
     @SerialName("net_out")
-    val netOut: Double? = null
+    val netOut: Long? = null
 )
 
 /**
@@ -251,4 +442,79 @@ data class HetrixApiErrorDto(
 
     @SerialName("error_message")
     val errorMessage: String? = null
+)
+
+/**
+ * Top-level response for GET /v3/blacklist-monitors.
+ */
+@Serializable
+data class BlacklistMonitorsResponseDto(
+    @SerialName("monitors")
+    val monitors: List<BlacklistMonitorDto> = emptyList(),
+
+    @SerialName("data")
+    val data: List<BlacklistMonitorDto> = emptyList(),
+
+    @SerialName("meta")
+    val meta: JsonElement? = null
+)
+
+/**
+ * Individual Blacklist / SNDS monitor item from API.
+ */
+@Serializable
+data class BlacklistMonitorDto(
+    @SerialName("id")
+    val id: String? = null,
+
+    @SerialName("name")
+    val name: String? = null,
+
+    @SerialName("target")
+    val target: String? = null,
+
+    @SerialName("type")
+    val type: String? = null,
+
+    @SerialName("rbl_status")
+    val rblStatus: String? = null,
+
+    @SerialName("blacklist_status")
+    val blacklistStatus: String? = null,
+
+    @SerialName("listed_count")
+    val listedCount: Int? = null,
+
+    @SerialName("listed_rbls")
+    val listedRbls: Int? = null,
+
+    @SerialName("total_rbls")
+    val totalRbls: Int? = null,
+
+    @SerialName("snds_status")
+    val sndsStatus: String? = null,
+
+    @SerialName("snds_ip_status")
+    val sndsIpStatus: String? = null,
+
+    @SerialName("last_check")
+    val lastCheck: Long? = null,
+
+    @SerialName("report_id")
+    val reportId: String? = null,
+
+    @SerialName("report_url")
+    val reportUrl: String? = null,
+
+    @SerialName("listed")
+    val listed: List<BlacklistListedItemDto> = emptyList()
+)
+
+@Serializable
+data class BlacklistListedItemDto(
+    @SerialName("rbl")
+    val rblName: String? = null,
+
+    @SerialName("delist")
+    val delistUrl: String? = null
 )

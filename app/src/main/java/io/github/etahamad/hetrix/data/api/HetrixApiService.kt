@@ -1,5 +1,6 @@
 package io.github.etahamad.hetrix.data.api
 
+import io.github.etahamad.hetrix.data.model.BlacklistMonitorsResponseDto
 import io.github.etahamad.hetrix.data.model.PingResponseDto
 import io.github.etahamad.hetrix.data.model.ServerAgentMetricsResponseDto
 import io.github.etahamad.hetrix.data.model.UptimeMonitorsResponseDto
@@ -40,4 +41,13 @@ interface HetrixApiService {
         @Path("monitor_id") monitorId: String,
         @Header("Authorization") authOverride: String? = null
     ): Response<ServerAgentMetricsResponseDto>
+
+    /**
+     * Retrieves all blacklist and SNDS monitors registered to the account.
+     * Official endpoint: GET /v3/blacklist-monitors
+     */
+    @GET("blacklist-monitors")
+    suspend fun getBlacklistMonitors(
+        @Header("Authorization") authOverride: String? = null
+    ): Response<BlacklistMonitorsResponseDto>
 }

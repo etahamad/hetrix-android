@@ -36,6 +36,7 @@ fun MetricBar(
     label: String,
     valuePercent: Float,
     modifier: Modifier = Modifier,
+    valueText: String? = null,
     unit: String = "%"
 ) {
     val clamped = (valuePercent / 100f).coerceIn(0f, 1f)
@@ -72,7 +73,7 @@ fun MetricBar(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = String.format(Locale.US, "%.1f%s", valuePercent, unit),
+                text = valueText ?: String.format(Locale.US, "%.1f%s", valuePercent, unit),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.SemiBold,
