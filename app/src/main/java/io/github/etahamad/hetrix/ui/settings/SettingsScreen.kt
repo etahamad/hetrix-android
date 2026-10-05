@@ -132,21 +132,14 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = "Settings & Vault",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = (-0.3).sp
-                            ),
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = "API connection, security, and app preferences",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Settings",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.3).sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
@@ -165,7 +158,7 @@ fun SettingsScreen(
         ) {
             // Section 1: API Connection & Vault Card
             item(key = "api_vault_card") {
-                SectionHeader(title = "SECURE API VAULT")
+                SectionHeader(title = "API VAULT")
 
                 OutlinedCard(
                     shape = RoundedCornerShape(20.dp),
@@ -183,7 +176,10 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.weight(1f, fill = false),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Surface(
                                     shape = RoundedCornerShape(10.dp),
                                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
@@ -201,17 +197,19 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = "HetrixTools v3 API",
+                                        text = "HetrixTools API Key",
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "KeyStore AES-256 GCM Encrypted",
+                                        text = "Encrypted on-device",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
+
+                            Spacer(modifier = Modifier.width(8.dp))
 
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
@@ -283,64 +281,68 @@ fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Action Buttons: Test Connection, Replace Key, Disconnect
+                        // Action Buttons: Two top action buttons + full width Disconnect button
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             OutlinedButton(
                                 onClick = onTestConnection,
                                 enabled = !isTestingConnection,
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
                                 if (isTestingConnection) {
                                     CircularProgressIndicator(
                                         strokeWidth = 2.dp,
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(15.dp)
                                     )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Testing…", fontSize = 12.sp)
                                 } else {
                                     Icon(
                                         imageVector = Icons.Default.NetworkCheck,
                                         contentDescription = null,
                                         modifier = Modifier.size(15.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Test", fontSize = 12.sp)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Test Connection", fontSize = 12.sp)
                                 }
                             }
 
                             OutlinedButton(
                                 onClick = { showReplaceKeySheet = true },
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1.3f)
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = null,
                                     modifier = Modifier.size(15.dp)
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text("Replace Key", fontSize = 12.sp)
                             }
+                        }
 
-                            FilledTonalButton(
-                                onClick = { showDisconnectDialog = true },
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                                    contentColor = MaterialTheme.colorScheme.error
-                                ),
-                                modifier = Modifier.weight(1.2f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.DeleteOutline,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Disconnect", fontSize = 12.sp)
-                            }
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        FilledTonalButton(
+                            onClick = { showDisconnectDialog = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Disconnect Account", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
                         }
                     }
                 }
@@ -388,9 +390,9 @@ fun SettingsScreen(
                                     )
                                     Text(
                                         text = when (mode) {
-                                            AppThemeMode.SYSTEM -> "Follows your Android system light/dark mode"
-                                            AppThemeMode.DARK -> "Deep Slate #0B0F19 background with Navy-gray surfaces"
-                                            AppThemeMode.LIGHT -> "Crisp slate #F8FAFC background with pale surfaces"
+                                            AppThemeMode.SYSTEM -> "Follows system theme"
+                                            AppThemeMode.DARK -> "Dark Slate theme"
+                                            AppThemeMode.LIGHT -> "Crisp Light theme"
                                         },
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -414,7 +416,7 @@ fun SettingsScreen(
 
             // Section 3: Polling & Auto-Refresh Interval
             item(key = "refresh_group") {
-                SectionHeader(title = "POLLING & SYNC SCHEDULE")
+                SectionHeader(title = "AUTO-REFRESH")
 
                 OutlinedCard(
                     shape = RoundedCornerShape(20.dp),
@@ -450,10 +452,10 @@ fun SettingsScreen(
                                     )
                                     Text(
                                         text = when (interval) {
-                                            AutoRefreshInterval.OFF -> "Update telemetry only on pull-to-refresh"
-                                            AutoRefreshInterval.EVERY_30S -> "Frequent real-time polling (active monitoring)"
-                                            AutoRefreshInterval.EVERY_1M -> "Standard balanced refresh cycle"
-                                            AutoRefreshInterval.EVERY_5M -> "Battery-saver interval"
+                                            AutoRefreshInterval.OFF -> "Manual refresh only"
+                                            AutoRefreshInterval.EVERY_30S -> "Every 30 seconds"
+                                            AutoRefreshInterval.EVERY_1M -> "Every 1 minute"
+                                            AutoRefreshInterval.EVERY_5M -> "Every 5 minutes"
                                         },
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -477,7 +479,7 @@ fun SettingsScreen(
 
             // Section 4: Privacy & Cache Control
             item(key = "privacy_group") {
-                SectionHeader(title = "PRIVACY & LOCAL STORAGE")
+                SectionHeader(title = "STORAGE & PRIVACY")
 
                 OutlinedCard(
                     shape = RoundedCornerShape(20.dp),
@@ -536,7 +538,7 @@ fun SettingsScreen(
 
             // Section 5: About & Open Source Information
             item(key = "about_card") {
-                SectionHeader(title = "ABOUT & OPEN SOURCE")
+                SectionHeader(title = "ABOUT")
 
                 OutlinedCard(
                     shape = RoundedCornerShape(20.dp),
