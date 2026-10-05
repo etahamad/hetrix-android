@@ -57,14 +57,13 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
-      - name: Prepare Release Assets
+      - name: Prepare Release Asset
         id: assets
         run: |
           mkdir -p release_assets
           TAG="${{ inputs.tag_name }}"
           cp app/build/outputs/apk/release/app-release.apk "release_assets/HetriX-${TAG}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "release_assets/HetriX-release.apk"
-          echo "Ready to upload release artifacts:"
+          echo "Ready to upload release artifact:"
           ls -la release_assets/
 
       - name: Create GitHub Release
@@ -76,8 +75,6 @@ jobs:
           generate_release_notes: ${{ inputs.release_notes == '' }}
           draft: ${{ inputs.draft }}
           prerelease: ${{ inputs.prerelease }}
-          files: |
-            release_assets/HetriX-${{ inputs.tag_name }}.apk
-            release_assets/HetriX-release.apk
+          files: release_assets/HetriX-${{ inputs.tag_name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
