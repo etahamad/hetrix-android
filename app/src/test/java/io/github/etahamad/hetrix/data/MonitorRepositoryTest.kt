@@ -165,7 +165,12 @@ class MonitorRepositoryTest {
         }
 
         override suspend fun getMonitorsEnvelope(authOverride: String?): Response<MonitorsApiResponseDto> {
-            return Response.success(MonitorsApiResponseDto(status = "SUCCESS", monitors = monitorsResponse.body().orEmpty()))
+            return if (monitorsResponse.isSuccessful) {
+                Response.success(MonitorsApiResponseDto(status = "SUCCESS", monitors = monitorsResponse.body().orEmpty()))
+            } else {
+                val errorBody = "{\"status\":\"ERROR\",\"error\":\"Invalid API Key provided\"}".toResponseBody("application/json".toMediaType())
+                Response.error(monitorsResponse.code(), errorBody)
+            }
         }
 
         override suspend fun getServerAgentMetrics(monitorId: String, authOverride: String?): Response<AgentMetricsDto> {
@@ -173,7 +178,11 @@ class MonitorRepositoryTest {
         }
 
         override suspend fun getServerAgentMetricsEnvelope(monitorId: String, authOverride: String?): Response<AgentMetricsApiResponseDto> {
-            return Response.success(AgentMetricsApiResponseDto(status = "SUCCESS", metrics = metricsResponse.body()))
+            return if (metricsResponse.isSuccessful) {
+                Response.success(AgentMetricsApiResponseDto(status = "SUCCESS", metrics = metricsResponse.body()))
+            } else {
+                Response.error(metricsResponse.code(), "".toResponseBody(null))
+            }
         }
     }
 }

@@ -51,26 +51,47 @@ class MonitorsViewModel(
 
     private var loadJob: Job? = null
 
+    private data class FilterParams(
+        val query: String,
+        val sort: SortOption,
+        val filter: FilterStatus
+    )
+
+    private data class SyncState(
+        val isLoading: Boolean,
+        val isRefreshing: Boolean,
+        val error: MonitorsUiState.Error?
+    )
+
+    private val filterParamsFlow = combine(_searchQuery, _sortOption, _filterStatus) { query, sort, filter ->
+        FilterParams(query, sort, filter)
+    }
+
+    private val syncStateFlow = combine(_isLoading, _isRefreshing, _errorState) { loading, refreshing, error ->
+        SyncState(loading, refreshing, error)
+    }
+
     val uiState: StateFlow<MonitorsUiState> = combine(
         repository.tokenFlow,
         _rawMonitors,
-        _searchQuery,
-        _sortOption,
-        _filterStatus,
-        _isLoading,
-        _isRefreshing,
-        _errorState
-    ) { token, monitors, query, sort, filter, loading, refreshing, error ->
+        filterParamsFlow,
+        syncStateFlow
+    ) { token, monitors, filterParams, syncState ->
         when {
             token.isNullOrBlank() -> MonitorsUiState.NoToken
-            error != null -> error.copy(isRefreshing = refreshing)
-            loading && monitors.isEmpty() -> MonitorsUiState.Loading()
+            syncState.error != null -> syncState.error.copy(isRefreshing = syncState.isRefreshing)
+            syncState.isLoading && monitors.isEmpty() -> MonitorsUiState.Loading()
             else -> {
-                val filtered = filterAndSortMonitors(monitors, query, sort, filter)
+                val filtered = filterAndSortMonitors(
+                    monitors = monitors,
+                    query = filterParams.query,
+                    sort = filterParams.sort,
+                    filter = filterParams.filter
+                )
                 MonitorsUiState.Success(
                     monitors = monitors,
                     filteredMonitors = filtered,
-                    isRefreshing = refreshing,
+                    isRefreshing = syncState.isRefreshing,
                     lastRefreshedTimestamp = System.currentTimeMillis()
                 )
             }

@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -50,10 +52,14 @@ class MonitorsViewModelTest {
     fun initialState_isNoToken_whenRepositoryHasNoToken() = runTest {
         fakeRepository.setToken(null)
         viewModel = MonitorsViewModel(fakeRepository)
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect {}
+        }
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(MonitorsUiState.NoToken, state)
+        job.cancel()
     }
 
     @Test
@@ -75,6 +81,9 @@ class MonitorsViewModelTest {
         )
 
         viewModel = MonitorsViewModel(fakeRepository)
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect {}
+        }
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -82,6 +91,7 @@ class MonitorsViewModelTest {
         val success = state as MonitorsUiState.Success
         assertEquals(1, success.monitors.size)
         assertEquals("EU Node 1", success.monitors[0].name)
+        job.cancel()
     }
 
     @Test
@@ -113,6 +123,9 @@ class MonitorsViewModelTest {
         )
 
         viewModel = MonitorsViewModel(fakeRepository)
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect {}
+        }
         advanceUntilIdle()
 
         viewModel.updateSearchQuery("database")
@@ -121,6 +134,7 @@ class MonitorsViewModelTest {
         val state = viewModel.uiState.value as MonitorsUiState.Success
         assertEquals(1, state.filteredMonitors.size)
         assertEquals("Database Primary", state.filteredMonitors[0].name)
+        job.cancel()
     }
 
     @Test
@@ -152,6 +166,9 @@ class MonitorsViewModelTest {
         )
 
         viewModel = MonitorsViewModel(fakeRepository)
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect {}
+        }
         advanceUntilIdle()
 
         viewModel.updateSortOption(SortOption.STATUS)
@@ -160,12 +177,16 @@ class MonitorsViewModelTest {
         val state = viewModel.uiState.value as MonitorsUiState.Success
         assertEquals("Beta Offline", state.filteredMonitors[0].name)
         assertEquals("Alpha Online", state.filteredMonitors[1].name)
+        job.cancel()
     }
 
     @Test
     fun saveAndValidateToken_savesWhenValid() = runTest {
         fakeRepository.setToken(null)
         viewModel = MonitorsViewModel(fakeRepository)
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect {}
+        }
         advanceUntilIdle()
 
         viewModel.saveAndValidateToken("new_valid_token")
