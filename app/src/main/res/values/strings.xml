@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">HetriX</string>
+    <string name="app_tagline">HetrixTools Monitoring Client</string>
+    <string name="search_placeholder">Search monitors &amp; servers…</string>
+    <string name="settings_title">Settings</string>
+    <string name="api_token_label">HetrixTools API Bearer Token</string>
+    <string name="api_token_helper">Find your v3 API token in HetrixTools Dashboard → Account → API.</string>
+    <string name="save_token">Save &amp; Connect</string>
+    <string name="clear_token">Disconnect Token</string>
+    <string name="token_saved">API token saved securely.</string>
+    <string name="token_cleared">API token cleared.</string>
+    <string name="token_invalid">Invalid API token. Please verify your credentials.</string>
+    <string name="status_online">Online</string>
+    <string name="status_offline">Offline</string>
+    <string name="status_warning">Warning</string>
+    <string name="status_paused">Paused</string>
+    <string name="status_unknown">Unknown</string>
+    <string name="empty_monitors_title">No Monitors Found</string>
+    <string name="empty_monitors_desc">No active monitors were returned by your HetrixTools account.</string>
+    <string name="no_token_title">Welcome to HetriX</string>
+    <string name="no_token_desc">Configure your HetrixTools API bearer token to monitor your servers and uptime telemetry in real-time.</string>
+    <string name="configure_token_btn">Configure API Token</string>
+    <string name="retry">Retry</string>
+    <string name="refresh">Refresh</string>
+    <string name="last_updated">Last updated: %1$s</string>
+</resources>

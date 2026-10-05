@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.65"
+        android:scaleY="0.65"
+        android:pivotX="54"
+        android:pivotY="54">
+        <!-- Server Rack 1 -->
+        <path
+            android:fillColor="#38BDF8"
+            android:pathData="M28,32h52c2.2,0 4,1.8 4,4v10c0,2.2 -1.8,4 -4,4H28c-2.2,0 -4,-1.8 -4,-4V36c0,-2.2 1.8,-4 4,-4z" />
+        <path
+            android:fillColor="#0284C7"
+            android:pathData="M72,41a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
+        <path
+            android:fillColor="#10B981"
+            android:pathData="M64,41a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
+
+        <!-- Server Rack 2 -->
+        <path
+            android:fillColor="#38BDF8"
+            android:pathData="M28,54h52c2.2,0 4,1.8 4,4v10c0,2.2 -1.8,4 -4,4H28c-2.2,0 -4,-1.8 -4,-4V58c0,-2.2 1.8,-4 4,-4z" />
+        <path
+            android:fillColor="#0284C7"
+            android:pathData="M72,63a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
+        <path
+            android:fillColor="#10B981"
+            android:pathData="M64,63a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
+
+        <!-- Pulse EKG Line on bottom -->
+        <path
+            android:strokeColor="#14B8A6"
+            android:strokeWidth="3.5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M24,82 L42,82 L47,73 L53,91 L59,77 L64,82 L84,82" />
+    </group>
+</vector>
