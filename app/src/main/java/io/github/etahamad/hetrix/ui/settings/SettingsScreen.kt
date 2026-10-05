@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -131,7 +132,12 @@ fun SettingsScreen(
     var showCacheClearedDialog by remember { mutableStateOf(false) }
 
     val isConnected = !currentToken.isNullOrBlank()
-    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val isSystemDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        AppThemeMode.SYSTEM -> isSystemDark
+        AppThemeMode.DARK -> true
+        AppThemeMode.LIGHT -> false
+    }
     val cardBg = if (isDark) DarkCardBg else MaterialTheme.colorScheme.surface
     val cardBorder = if (isDark) DarkCardBorder else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     val innerSurfaceBg = if (isDark) DarkNavBg else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
@@ -416,12 +422,12 @@ fun SettingsScreen(
                                     val activeText = if (isDark) FigmaGreenMint else Color(0xFF087F5B)
 
                                     Surface(
+                                        onClick = { onSetThemeMode(mode) },
                                         shape = segmentShape,
                                         color = if (isSelected) activePillBg else Color.Transparent,
                                         modifier = Modifier
                                             .weight(1f)
                                             .height(48.dp)
-                                            .clickable { onSetThemeMode(mode) }
                                     ) {
                                         Box(
                                             contentAlignment = Alignment.Center,
@@ -500,10 +506,11 @@ fun SettingsScreen(
                                     }
                                 },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
+                                    checkedThumbColor = if (isDark) Color(0xFF0B0F19) else Color.White,
                                     checkedTrackColor = if (isDark) FigmaGreenMint else Color(0xFF087F5B),
+                                    checkedBorderColor = Color.Transparent,
                                     uncheckedThumbColor = if (isDark) Color(0xFFACB8CC) else Color(0xFF68768E),
-                                    uncheckedTrackColor = if (isDark) Color(0xFF151C2B) else Color(0xFFEDF1F6),
+                                    uncheckedTrackColor = if (isDark) Color(0xFF1E2638) else Color(0xFFEDF1F6),
                                     uncheckedBorderColor = if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
                                 )
                             )
