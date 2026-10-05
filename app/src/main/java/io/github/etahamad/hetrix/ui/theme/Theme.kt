@@ -86,7 +86,7 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun HetrixTheme(
-    themeMode: AppThemeMode = AppThemeMode.DARK,
+    themeMode: AppThemeMode = AppThemeMode.SYSTEM,
     dynamicColor: Boolean = false, // Default to true HetrixTools brand palette
     content: @Composable () -> Unit
 ) {

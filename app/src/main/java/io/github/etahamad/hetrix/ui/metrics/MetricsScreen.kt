@@ -3,6 +3,7 @@ package io.github.etahamad.hetrix.ui.metrics
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -158,16 +159,6 @@ fun MetricsScreen(
                     ) { server ->
                         ServerAgentNodeCard(server = server)
                     }
-
-                    // Section 3: Footnote
-                    item(key = "servers_footnote") {
-                        Text(
-                            text = "Illustrative data · Values reflect each agent’s last report, not a continuous live stream.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
-                        )
-                    }
                 }
             }
         }
@@ -180,9 +171,14 @@ private fun FleetOverviewCard(
     healthyAgents: Int,
     attentionAgents: Int
 ) {
-    Surface(
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val cardBg = if (isDark) Color(0xFF1E2638) else Color(0xFFF4F6FA)
+    val cardBorder = if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
+
+    OutlinedCard(
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+        border = BorderStroke(1.dp, cardBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -197,7 +193,8 @@ private fun FleetOverviewCard(
                     text = "$totalAgents agents connected",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.3).sp
+                        letterSpacing = (-0.3).sp,
+                        fontSize = 20.sp
                     ),
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -205,20 +202,20 @@ private fun FleetOverviewCard(
                 Text(
                     text = "$healthyAgents healthy · $attentionAgents needs attention",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
                 )
             }
 
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                color = if (isDark) Color(0xFF12382F) else Color(0xFFDDF6EC),
                 modifier = Modifier.size(44.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Default.Dns,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -234,18 +231,27 @@ private fun ServerAgentNodeCard(
 ) {
     val metrics = server.metrics ?: return
     val isWarning = server.status == MonitorStatus.WARNING || metrics.diskPercent >= 90f || metrics.cpuPercent >= 85f
-    val statusBg = if (isWarning) Color(0xFF3D2E1E) else Color(0xFF12382F)
-    val statusText = if (isWarning) StatusDegradedAmber else StatusOperationalGreen
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+
+    val cardBg = if (isDark) Color(0xFF1E2638) else Color(0xFFF4F6FA)
+    val cardBorder = if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
+
+    val statusBg = if (isDark) {
+        if (isWarning) Color(0xFF3D2E1E) else Color(0xFF12382F)
+    } else {
+        if (isWarning) Color(0xFFFEF3E2) else Color(0xFFDDF6EC)
+    }
+    val statusText = if (isDark) {
+        if (isWarning) StatusDegradedAmber else StatusOperationalGreen
+    } else {
+        if (isWarning) Color(0xFFD97706) else Color(0xFF087F5B)
+    }
     val statusLabel = if (isWarning) "Warning" else "Connected"
 
     OutlinedCard(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-        ),
+        colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+        border = BorderStroke(1.dp, cardBorder),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
@@ -302,7 +308,7 @@ private fun ServerAgentNodeCard(
             Text(
                 text = "${server.target} · Report · ${TimeFormatter.formatRelativeTime(metrics.timestamp)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
             )
 
             // Resource Gauges: CPU, RAM, Disk
@@ -341,6 +347,7 @@ private fun ServerAgentNodeCard(
             val historyPoints = metrics.history.map { it.cpuPercent }.ifEmpty { listOf(15f, 22f, 18f, 28f, 24f, 35f, 30f, 42f, 38f, 24f) }
             SmoothSparklineWave(
                 points = historyPoints,
+                lineColor = if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(38.dp)
@@ -349,7 +356,7 @@ private fun ServerAgentNodeCard(
             Text(
                 text = "Network activity · Last 15 reported minutes",
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
             )
 
             // Vitals Checklist
@@ -361,13 +368,13 @@ private fun ServerAgentNodeCard(
                 Icon(
                     imageVector = Icons.Default.Dns,
                     contentDescription = null,
-                    tint = StatusOperationalGreen,
+                    tint = if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B),
                     modifier = Modifier.size(15.dp)
                 )
                 Text(
                     text = "RAID healthy · Drives healthy",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
                 )
             }
 
@@ -379,13 +386,21 @@ private fun ServerAgentNodeCard(
                 Icon(
                     imageVector = if (isWarning) Icons.Default.Warning else Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = if (isWarning) StatusDegradedAmber else StatusOperationalGreen,
+                    tint = if (isWarning) {
+                        if (isDark) StatusDegradedAmber else Color(0xFFD97706)
+                    } else {
+                        if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B)
+                    },
                     modifier = Modifier.size(15.dp)
                 )
                 Text(
                     text = if (isWarning) "7 services running · backupd stopped" else "${metrics.openPorts.size.coerceAtLeast(8)} services running",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isWarning) StatusDegradedAmber else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isWarning) {
+                        if (isDark) StatusDegradedAmber else Color(0xFFD97706)
+                    } else {
+                        if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
+                    }
                 )
             }
         }
@@ -398,7 +413,14 @@ private fun ResourceBar(
     percent: Float,
     isCritical: Boolean = false
 ) {
-    val barColor = if (isCritical || percent >= 90f) StatusDownCrimson else if (percent >= 75f) StatusDegradedAmber else StatusOperationalGreen
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val barColor = if (isCritical || percent >= 90f) {
+        if (isDark) StatusDownCrimson else Color(0xFFDC2626)
+    } else if (percent >= 75f) {
+        if (isDark) StatusDegradedAmber else Color(0xFFD97706)
+    } else {
+        if (isDark) StatusOperationalGreen else Color(0xFF087F5B)
+    }
     val displayPercent = String.format(Locale.US, "%.0f%%", percent) + if (isCritical) " !" else ""
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -416,7 +438,11 @@ private fun ResourceBar(
                 text = displayPercent,
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Bold,
-                    color = if (isCritical) StatusDownCrimson else MaterialTheme.colorScheme.onSurface
+                    color = if (isCritical) {
+                        if (isDark) StatusDownCrimson else Color(0xFFDC2626)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
             )
         }
@@ -424,7 +450,7 @@ private fun ResourceBar(
         LinearProgressIndicator(
             progress = { (percent / 100f).coerceIn(0f, 1f) },
             color = barColor,
-            trackColor = MaterialTheme.colorScheme.surfaceContainer,
+            trackColor = if (isDark) Color(0xFF151C2B) else Color(0xFFEDF1F6),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
@@ -436,9 +462,9 @@ private fun ResourceBar(
 @Composable
 private fun SmoothSparklineWave(
     points: List<Float>,
+    lineColor: Color = StatusOperationalGreen,
     modifier: Modifier = Modifier
 ) {
-    val lineColor = StatusOperationalGreen
     Canvas(modifier = modifier) {
         if (points.size < 2) return@Canvas
         val width = size.width
@@ -473,3 +499,4 @@ private fun SmoothSparklineWave(
         )
     }
 }
+

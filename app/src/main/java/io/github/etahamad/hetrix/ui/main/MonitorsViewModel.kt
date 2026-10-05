@@ -42,7 +42,7 @@ class MonitorsViewModel(
     private val _reputationFilter = MutableStateFlow(ReputationFilter.ALL)
     val reputationFilter: StateFlow<ReputationFilter> = _reputationFilter.asStateFlow()
 
-    private val _themeMode = MutableStateFlow(AppThemeMode.DARK)
+    private val _themeMode = MutableStateFlow(AppThemeMode.SYSTEM)
     val themeMode: StateFlow<AppThemeMode> = _themeMode.asStateFlow()
 
     private val _autoRefreshInterval = MutableStateFlow(AutoRefreshInterval.OFF)

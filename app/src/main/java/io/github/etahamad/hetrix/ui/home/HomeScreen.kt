@@ -3,6 +3,7 @@ package io.github.etahamad.hetrix.ui.home
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -208,34 +209,6 @@ fun HomeScreen(
                     ) { monitor ->
                         HomeMonitorCard(monitor = monitor)
                     }
-
-                    // Section 4: History Legend at bottom
-                    item(key = "history_legend") {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                LegendItem(color = StatusOperationalGreen, label = "Operational")
-                                LegendItem(color = StatusDegradedAmber, label = "Degraded")
-                                LegendItem(color = StatusDownCrimson, label = "Down")
-                                LegendItem(color = StatusNeutralGray, label = "Unknown")
-                            }
-
-                            Text(
-                                text = "Illustrative data · Monitor checks ≠ app refresh",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -250,8 +223,22 @@ private fun GlobalStatusBanner(
     operationalCount: Int,
     totalCount: Int
 ) {
-    val bgColor = if (hasIncident) Color(0xFF3D222B) else Color(0xFF12382F)
-    val iconColor = if (hasIncident) StatusDownCrimson else StatusOperationalGreen
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val bgColor = if (isDark) {
+        if (hasIncident) Color(0xFF3D222B) else Color(0xFF12382F)
+    } else {
+        if (hasIncident) Color(0xFFFCE8EB) else Color(0xFFDDF6EC)
+    }
+    val iconColor = if (isDark) {
+        if (hasIncident) StatusDownCrimson else StatusOperationalGreen
+    } else {
+        if (hasIncident) Color(0xFFDC2626) else Color(0xFF087F5B)
+    }
+    val titleColor = if (isDark) {
+        MaterialTheme.colorScheme.onBackground
+    } else {
+        if (hasIncident) Color(0xFF991B1B) else Color(0xFF087F5B)
+    }
     val titleText = if (hasIncident) {
         val count = downCount + degradedCount
         if (count == 1) "1 Outage Detected" else "$count Outages Detected"
@@ -271,7 +258,7 @@ private fun GlobalStatusBanner(
         ) {
             Surface(
                 shape = CircleShape,
-                color = iconColor.copy(alpha = 0.2f),
+                color = iconColor.copy(alpha = if (isDark) 0.2f else 0.15f),
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -293,13 +280,13 @@ private fun GlobalStatusBanner(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.2).sp
                     ),
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = titleColor
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitleText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
                 )
             }
         }
@@ -312,9 +299,22 @@ private fun PillFilterButton(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val containerColor = if (isSelected) Color(0xFF12382F) else MaterialTheme.colorScheme.surfaceContainer
-    val textColor = if (isSelected) StatusOperationalGreen else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderColor = if (isSelected) StatusOperationalGreen.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val containerColor = if (isSelected) {
+        if (isDark) Color(0xFF12382F) else Color(0xFFDDF6EC)
+    } else {
+        if (isDark) Color(0xFF151C2B) else Color(0xFFEDF1F6)
+    }
+    val textColor = if (isSelected) {
+        if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B)
+    } else {
+        if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
+    }
+    val borderColor = if (isSelected) {
+        if (isDark) StatusOperationalGreen.copy(alpha = 0.4f) else Color(0xFF087F5B)
+    } else {
+        if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
+    }
 
     Surface(
         shape = RoundedCornerShape(100.dp),
@@ -333,7 +333,7 @@ private fun PillFilterButton(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = StatusOperationalGreen,
+                    tint = if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B),
                     modifier = Modifier.size(14.dp)
                 )
             }
@@ -356,15 +356,15 @@ private fun HomeMonitorCard(
     var isExpanded by remember { mutableStateOf(false) }
     val isDown = monitor.status == MonitorStatus.OFFLINE
     val isDegraded = monitor.status == MonitorStatus.WARNING
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+
+    val cardBg = if (isDark) Color(0xFF1E2638) else Color(0xFFF4F6FA)
+    val cardBorder = if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
 
     OutlinedCard(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-        ),
+        colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+        border = BorderStroke(1.dp, cardBorder),
         modifier = modifier
             .fillMaxWidth()
             .clickable { isExpanded = !isExpanded }
@@ -396,8 +396,16 @@ private fun HomeMonitorCard(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 // Badge Pill
-                val badgeBg = if (isDown) Color(0xFF3D222B) else if (isDegraded) Color(0xFF3D2E1E) else Color(0xFF12382F)
-                val badgeText = if (isDown) StatusDownCrimson else if (isDegraded) StatusDegradedAmber else StatusOperationalGreen
+                val badgeBg = if (isDark) {
+                    if (isDown) Color(0xFF3D222B) else if (isDegraded) Color(0xFF3D2E1E) else Color(0xFF12382F)
+                } else {
+                    if (isDown) Color(0xFFFCE8EB) else if (isDegraded) Color(0xFFFEF3E2) else Color(0xFFDDF6EC)
+                }
+                val badgeText = if (isDark) {
+                    if (isDown) StatusDownCrimson else if (isDegraded) StatusDegradedAmber else StatusOperationalGreen
+                } else {
+                    if (isDown) Color(0xFFDC2626) else if (isDegraded) Color(0xFFD97706) else Color(0xFF087F5B)
+                }
                 val badgeLabel = if (isDown) "Down" else if (isDegraded) "Degraded" else "Operational"
 
                 Surface(
@@ -597,28 +605,5 @@ private fun AvailabilityMicroBlocksTimeline(
                     .background(blockColor)
             )
         }
-    }
-}
-
-@Composable
-private fun LegendItem(
-    color: Color,
-    label: String
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(7.dp)
-                .clip(CircleShape)
-                .background(color)
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }

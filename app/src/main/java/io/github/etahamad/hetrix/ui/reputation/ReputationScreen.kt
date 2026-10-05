@@ -2,6 +2,7 @@ package io.github.etahamad.hetrix.ui.reputation
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -275,9 +276,23 @@ private fun ReputationSummaryBanner(
     unknownCount: Int,
     totalCount: Int
 ) {
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
     val isIncident = listedCount > 0
-    val bgColor = if (isIncident) Color(0xFF3D222B) else Color(0xFF12382F)
-    val iconColor = if (isIncident) StatusDownCrimson else StatusOperationalGreen
+    val bgColor = if (isDark) {
+        if (isIncident) Color(0xFF3D222B) else Color(0xFF12382F)
+    } else {
+        if (isIncident) Color(0xFFFCE8EB) else Color(0xFFDDF6EC)
+    }
+    val iconColor = if (isDark) {
+        if (isIncident) StatusDownCrimson else StatusOperationalGreen
+    } else {
+        if (isIncident) Color(0xFFDC2626) else Color(0xFF087F5B)
+    }
+    val titleColor = if (isDark) {
+        MaterialTheme.colorScheme.onBackground
+    } else {
+        if (isIncident) Color(0xFF991B1B) else Color(0xFF087F5B)
+    }
     val titleText = if (isIncident) {
         if (listedCount == 1) "1 asset blacklisted" else "$listedCount assets blacklisted"
     } else {
@@ -296,7 +311,7 @@ private fun ReputationSummaryBanner(
         ) {
             Surface(
                 shape = CircleShape,
-                color = iconColor.copy(alpha = 0.2f),
+                color = iconColor.copy(alpha = if (isDark) 0.2f else 0.15f),
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -318,13 +333,13 @@ private fun ReputationSummaryBanner(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.2).sp
                     ),
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = titleColor
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitleText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
                 )
             }
         }
@@ -337,9 +352,22 @@ private fun ReputationPillFilter(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val containerColor = if (isSelected) Color(0xFF12382F) else MaterialTheme.colorScheme.surfaceContainer
-    val textColor = if (isSelected) StatusOperationalGreen else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderColor = if (isSelected) StatusOperationalGreen.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val containerColor = if (isSelected) {
+        if (isDark) Color(0xFF12382F) else Color(0xFFDDF6EC)
+    } else {
+        if (isDark) Color(0xFF151C2B) else Color(0xFFEDF1F6)
+    }
+    val textColor = if (isSelected) {
+        if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B)
+    } else {
+        if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
+    }
+    val borderColor = if (isSelected) {
+        if (isDark) StatusOperationalGreen.copy(alpha = 0.4f) else Color(0xFF087F5B)
+    } else {
+        if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
+    }
 
     Surface(
         shape = RoundedCornerShape(100.dp),
@@ -358,7 +386,7 @@ private fun ReputationPillFilter(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = StatusOperationalGreen,
+                    tint = if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B),
                     modifier = Modifier.size(14.dp)
                 )
             }
@@ -380,18 +408,27 @@ private fun ReputationTargetCard(
 ) {
     val context = LocalContext.current
     val isBlacklisted = monitor.status == ReputationStatus.LISTED || monitor.status == ReputationStatus.WARNING || monitor.listedCount > 0
-    val statusBg = if (isBlacklisted) Color(0xFF3D222B) else Color(0xFF12382F)
-    val statusText = if (isBlacklisted) StatusDownCrimson else StatusOperationalGreen
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+
+    val cardBg = if (isDark) Color(0xFF1E2638) else Color(0xFFF4F6FA)
+    val cardBorder = if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
+
+    val statusBg = if (isDark) {
+        if (isBlacklisted) Color(0xFF3D222B) else Color(0xFF12382F)
+    } else {
+        if (isBlacklisted) Color(0xFFFCE8EB) else Color(0xFFDDF6EC)
+    }
+    val statusText = if (isDark) {
+        if (isBlacklisted) StatusDownCrimson else StatusOperationalGreen
+    } else {
+        if (isBlacklisted) Color(0xFFDC2626) else Color(0xFF087F5B)
+    }
     val statusLabel = if (isBlacklisted) "Blacklisted" else "Clean"
 
     OutlinedCard(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outlineVariant)
-        ),
+        colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
+        border = BorderStroke(1.dp, cardBorder),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
@@ -469,7 +506,7 @@ private fun ReputationTargetCard(
             Text(
                 text = "Checked today · ${TimeFormatter.formatRelativeTime(monitor.lastCheckTimestamp)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
             )
 
             // Microsoft SNDS Row
@@ -481,7 +518,7 @@ private fun ReputationTargetCard(
                 Text(
                     text = "Microsoft SNDS",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
                 )
                 Text(
                     text = when (monitor.sndsStatus) {
@@ -493,9 +530,9 @@ private fun ReputationTargetCard(
                         fontWeight = if (monitor.sndsStatus == SndsStatus.CLEAN) FontWeight.Bold else FontWeight.Normal
                     ),
                     color = when (monitor.sndsStatus) {
-                        SndsStatus.CLEAN -> StatusOperationalGreen
-                        SndsStatus.WARNING -> StatusDownCrimson
-                        SndsStatus.NOT_AVAILABLE -> MaterialTheme.colorScheme.onSurfaceVariant
+                        SndsStatus.CLEAN -> if (isDark) Color(0xFF61E2B6) else Color(0xFF087F5B)
+                        SndsStatus.WARNING -> if (isDark) StatusDownCrimson else Color(0xFFDC2626)
+                        SndsStatus.NOT_AVAILABLE -> if (isDark) Color(0xFFACB8CC) else Color(0xFF556279)
                     }
                 )
             }
@@ -510,11 +547,11 @@ private fun ReputationTargetCard(
                 // Outlined Pill Button: Delisting Guide
                 Surface(
                     shape = RoundedCornerShape(100.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    color = if (isDark) Color(0xFF151C2B) else Color(0xFFEDF1F6),
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(100.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(100.dp))
+                        .border(1.dp, cardBorder, RoundedCornerShape(100.dp))
                         .clickable {
                             val url = monitor.delistUrls.firstOrNull() ?: "https://hetrixtools.com/delist-guide/"
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -561,3 +598,4 @@ private fun ReputationTargetCard(
         }
     }
 }
+

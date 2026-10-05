@@ -397,9 +397,27 @@ fun SettingsScreen(
                             ) {
                                 AppThemeMode.entries.forEach { mode ->
                                     val isSelected = themeMode == mode
+                                    val segmentShape = when (mode) {
+                                        AppThemeMode.SYSTEM -> RoundedCornerShape(
+                                            topStart = 100.dp,
+                                            bottomStart = 100.dp,
+                                            topEnd = 0.dp,
+                                            bottomEnd = 0.dp
+                                        )
+                                        AppThemeMode.DARK -> RoundedCornerShape(0.dp)
+                                        AppThemeMode.LIGHT -> RoundedCornerShape(
+                                            topStart = 0.dp,
+                                            bottomStart = 0.dp,
+                                            topEnd = 100.dp,
+                                            bottomEnd = 100.dp
+                                        )
+                                    }
+                                    val activePillBg = if (isDark) DarkPillActive else Color(0xFFDDF6EC)
+                                    val activeText = if (isDark) FigmaGreenMint else Color(0xFF087F5B)
+
                                     Surface(
-                                        shape = RoundedCornerShape(100.dp),
-                                        color = if (isSelected) DarkPillActive else Color.Transparent,
+                                        shape = segmentShape,
+                                        color = if (isSelected) activePillBg else Color.Transparent,
                                         modifier = Modifier
                                             .weight(1f)
                                             .height(48.dp)
@@ -417,7 +435,7 @@ fun SettingsScreen(
                                                     Icon(
                                                         imageVector = Icons.Default.Check,
                                                         contentDescription = null,
-                                                        tint = FigmaGreenMint,
+                                                        tint = activeText,
                                                         modifier = Modifier.size(14.dp)
                                                     )
                                                     Spacer(modifier = Modifier.width(4.dp))
@@ -432,7 +450,7 @@ fun SettingsScreen(
                                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                         fontSize = 13.sp
                                                     ),
-                                                    color = if (isSelected) FigmaGreenMint else textMuted
+                                                    color = if (isSelected) activeText else textMuted
                                                 )
                                             }
                                         }
@@ -483,9 +501,10 @@ fun SettingsScreen(
                                 },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
-                                    checkedTrackColor = FigmaGreenMint,
-                                    uncheckedThumbColor = textMuted,
-                                    uncheckedTrackColor = cardBorder
+                                    checkedTrackColor = if (isDark) FigmaGreenMint else Color(0xFF087F5B),
+                                    uncheckedThumbColor = if (isDark) Color(0xFFACB8CC) else Color(0xFF68768E),
+                                    uncheckedTrackColor = if (isDark) Color(0xFF151C2B) else Color(0xFFEDF1F6),
+                                    uncheckedBorderColor = if (isDark) Color(0xFF303B50) else Color(0xFFDCE2EB)
                                 )
                             )
                         }
@@ -509,12 +528,22 @@ fun SettingsScreen(
                                     AutoRefreshInterval.EVERY_30S to "30s",
                                     AutoRefreshInterval.EVERY_1M to "1 min",
                                     AutoRefreshInterval.EVERY_5M to "5 min"
-                                ).forEach { (interval, label) ->
+                               ).forEach { (interval, label) ->
                                     val isSelected = autoRefreshInterval == interval
+                                    val pillBg = if (isSelected) {
+                                        if (isDark) DarkPillActive else Color(0xFFDDF6EC)
+                                    } else innerSurfaceBg
+                                    val pillText = if (isSelected) {
+                                        if (isDark) FigmaGreenMint else Color(0xFF087F5B)
+                                    } else textMuted
+                                    val pillBorder = if (isSelected) {
+                                        if (isDark) FigmaGreenAccent else Color(0xFF087F5B)
+                                    } else cardBorder
+
                                     Surface(
                                         shape = RoundedCornerShape(100.dp),
-                                        color = if (isSelected) DarkPillActive else innerSurfaceBg,
-                                        border = BorderStroke(1.dp, if (isSelected) FigmaGreenAccent else cardBorder),
+                                        color = pillBg,
+                                        border = BorderStroke(1.dp, pillBorder),
                                         modifier = Modifier
                                             .weight(1f)
                                             .height(34.dp)
@@ -526,7 +555,7 @@ fun SettingsScreen(
                                                 style = MaterialTheme.typography.labelSmall.copy(
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                                 ),
-                                                color = if (isSelected) FigmaGreenMint else textMuted
+                                                color = pillText
                                             )
                                         }
                                     }
@@ -539,6 +568,7 @@ fun SettingsScreen(
 
             // Card 4: Privacy & local cache
             item(key = "privacy_card") {
+                val clearTint = if (isDark) FigmaGreenMint else Color(0xFF087F5B)
                 OutlinedCard(
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.outlinedCardColors(containerColor = cardBg),
@@ -584,7 +614,7 @@ fun SettingsScreen(
                             shape = RoundedCornerShape(100.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = innerSurfaceBg,
-                                contentColor = FigmaGreenMint
+                                contentColor = clearTint
                             ),
                             border = BorderStroke(1.dp, cardBorder),
                             modifier = Modifier
@@ -594,7 +624,7 @@ fun SettingsScreen(
                             Icon(
                                 imageVector = Icons.Default.DeleteOutline,
                                 contentDescription = null,
-                                tint = FigmaGreenMint,
+                                tint = clearTint,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -604,7 +634,7 @@ fun SettingsScreen(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
                                 ),
-                                color = FigmaGreenMint
+                                color = clearTint
                             )
                         }
                     }
@@ -781,11 +811,15 @@ private fun ReplaceApiKeySheet(
     var inputKey by remember { mutableStateOf("") }
     var isKeyVisible by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
+    val isDark = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
+    val sheetBg = if (isDark) DarkCardBg else MaterialTheme.colorScheme.surface
+    val textPrimary = if (isDark) DarkTextPrimary else MaterialTheme.colorScheme.onSurface
+    val textMuted = if (isDark) DarkTextMuted else MaterialTheme.colorScheme.onSurfaceVariant
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = DarkCardBg
+        containerColor = sheetBg
     ) {
         Column(
             modifier = Modifier
@@ -796,13 +830,13 @@ private fun ReplaceApiKeySheet(
             Text(
                 text = "Update HetrixTools API Key",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = DarkTextPrimary
+                color = textPrimary
             )
 
             Text(
                 text = "Enter a new HetrixTools v3 API Bearer token. It will be validated directly against the HetrixTools API before saving securely on device.",
                 style = MaterialTheme.typography.bodySmall,
-                color = DarkTextMuted
+                color = textMuted
             )
 
             OutlinedTextField(
@@ -819,7 +853,7 @@ private fun ReplaceApiKeySheet(
                             Icon(
                                 imageVector = if (isKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                 contentDescription = if (isKeyVisible) "Hide token" else "Show token",
-                                tint = DarkTextMuted
+                                tint = textMuted
                             )
                         }
                         IconButton(
@@ -832,7 +866,7 @@ private fun ReplaceApiKeySheet(
                             Icon(
                                 imageVector = Icons.Default.ContentPaste,
                                 contentDescription = "Paste from clipboard",
-                                tint = FigmaGreenMint
+                                tint = if (isDark) FigmaGreenMint else Color(0xFF087F5B)
                             )
                         }
                     }
@@ -858,7 +892,7 @@ private fun ReplaceApiKeySheet(
                     shape = RoundedCornerShape(100.dp),
                     modifier = Modifier.weight(1f).height(48.dp)
                 ) {
-                    Text("Cancel", color = DarkTextMuted)
+                    Text("Cancel", color = textMuted)
                 }
 
                 Button(
