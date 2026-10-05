@@ -2,90 +2,102 @@ package io.github.etahamad.hetrix.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Colors - Vibrant Tech Blue
-val HetrixPrimaryLight = Color(0xFF2563EB)
+// ==============================================================================
+// Exact Design Tokens from Figma 25 Nodes Export
+// ==============================================================================
+
+// Primary Brand Accent - Emerald Green (#10B981 / #087F5B)
+val HetrixPrimaryDark = Color(0xFF10B981)
+val HetrixOnPrimaryDark = Color(0xFFFFFFFF)
+val HetrixPrimaryContainerDark = Color(0xFF12382F)
+val HetrixOnPrimaryContainerDark = Color(0xFF61E2B6)
+
+val HetrixPrimaryLight = Color(0xFF087F5B)
 val HetrixOnPrimaryLight = Color(0xFFFFFFFF)
-val HetrixPrimaryContainerLight = Color(0xFFDBEAFE)
-val HetrixOnPrimaryContainerLight = Color(0xFF1E40AF)
+val HetrixPrimaryContainerLight = Color(0xFFDDF6EC)
+val HetrixOnPrimaryContainerLight = Color(0xFF087F5B)
 
-val HetrixPrimaryDark = Color(0xFF3B82F6)
-val HetrixOnPrimaryDark = Color(0xFF0F172A)
-val HetrixPrimaryContainerDark = Color(0xFF1E3A8A)
-val HetrixOnPrimaryContainerDark = Color(0xFFDBEAFE)
+// Secondary Colors - Tech Slate
+val HetrixSecondaryDark = Color(0xFFACB8CC)
+val HetrixOnSecondaryDark = Color(0xFF0B0F19)
+val HetrixSecondaryContainerDark = Color(0xFF151C2B)
+val HetrixOnSecondaryContainerDark = Color(0xFFF4F7FC)
 
-// Secondary Colors - Slate Tech
-val HetrixSecondaryLight = Color(0xFF475569)
+val HetrixSecondaryLight = Color(0xFF68768E)
 val HetrixOnSecondaryLight = Color(0xFFFFFFFF)
-val HetrixSecondaryContainerLight = Color(0xFFF1F5F9)
-val HetrixOnSecondaryContainerLight = Color(0xFF0F172A)
+val HetrixSecondaryContainerLight = Color(0xFFEDF1F6)
+val HetrixOnSecondaryContainerLight = Color(0xFF0B0F19)
 
-val HetrixSecondaryDark = Color(0xFF94A3B8)
-val HetrixOnSecondaryDark = Color(0xFF0F172A)
-val HetrixSecondaryContainerDark = Color(0xFF1E293B)
-val HetrixOnSecondaryContainerDark = Color(0xFFF8FAFC)
+// Tertiary Colors - Indigo / Cyan Accents
+val HetrixTertiaryDark = Color(0xFF61E2B6)
+val HetrixOnTertiaryDark = Color(0xFF0B0F19)
+val HetrixTertiaryContainerDark = Color(0xFF12382F)
+val HetrixOnTertiaryContainerDark = Color(0xFFF4F7FC)
 
-// Tertiary Colors - Indigo Accent
-val HetrixTertiaryLight = Color(0xFF6366F1)
+val HetrixTertiaryLight = Color(0xFF087F5B)
 val HetrixOnTertiaryLight = Color(0xFFFFFFFF)
-val HetrixTertiaryContainerLight = Color(0xFFEEF2FF)
-val HetrixOnTertiaryContainerLight = Color(0xFF312E81)
+val HetrixTertiaryContainerLight = Color(0xFFDDF6EC)
+val HetrixOnTertiaryContainerLight = Color(0xFF087F5B)
 
-val HetrixTertiaryDark = Color(0xFF818CF8)
-val HetrixOnTertiaryDark = Color(0xFF1E1B4B)
-val HetrixTertiaryContainerDark = Color(0xFF312E81)
-val HetrixOnTertiaryContainerDark = Color(0xFFEEF2FF)
+// Error / Down / Blacklisted - Crimson (#EF4444 / #3D222B / #FCE8EB)
+val HetrixErrorDark = Color(0xFFEF4444)
+val HetrixOnErrorDark = Color(0xFFFFFFFF)
+val HetrixErrorContainerDark = Color(0xFF3D222B)
+val HetrixOnErrorContainerDark = Color(0xFFFCE8EB)
 
-// Error / Down / Blacklisted - Crimson
 val HetrixErrorLight = Color(0xFFDC2626)
 val HetrixOnErrorLight = Color(0xFFFFFFFF)
-val HetrixErrorContainerLight = Color(0xFFFEE2E2)
+val HetrixErrorContainerLight = Color(0xFFFCE8EB)
 val HetrixOnErrorContainerLight = Color(0xFF991B1B)
 
-val HetrixErrorDark = Color(0xFFEF4444)
-val HetrixOnErrorDark = Color(0xFF450A0A)
-val HetrixErrorContainerDark = Color(0xFF7F1D1D)
-val HetrixOnErrorContainerDark = Color(0xFFFEE2E2)
-
-// Surface Container Tokens (Dark Theme - Deep Slate #0B0F19 and Navy-Gray #1E2638)
+// Dark Theme Surfaces (Deep Slate #0B0F19, Card #1E2638, Nav #151C2B, Border #303B50)
 val HetrixDarkBackground = Color(0xFF0B0F19)
-val HetrixDarkOnBackground = Color(0xFFF8FAFC)
+val HetrixDarkOnBackground = Color(0xFFF4F7FC)
 val HetrixDarkSurface = Color(0xFF121724)
-val HetrixDarkOnSurface = Color(0xFFF8FAFC)
+val HetrixDarkOnSurface = Color(0xFFF4F7FC)
 val HetrixDarkSurfaceVariant = Color(0xFF1E2638)
-val HetrixDarkOnSurfaceVariant = Color(0xFF94A3B8)
-val HetrixDarkOutline = Color(0xFF334155)
-val HetrixDarkOutlineVariant = Color(0xFF1E293B)
+val HetrixDarkOnSurfaceVariant = Color(0xFFACB8CC)
+val HetrixDarkOutline = Color(0xFF4A5872)
+val HetrixDarkOutlineVariant = Color(0xFF303B50)
 
 val HetrixDarkSurfaceContainerLowest = Color(0xFF070A11)
-val HetrixDarkSurfaceContainerLow = Color(0xFF0F1422)
-val HetrixDarkSurfaceContainer = Color(0xFF161C2C)
-val HetrixDarkSurfaceContainerHigh = Color(0xFF1E2638)
-val HetrixDarkSurfaceContainerHighest = Color(0xFF252F45)
+val HetrixDarkSurfaceContainerLow = Color(0xFF1E2638) // Figma Card fill
+val HetrixDarkSurfaceContainer = Color(0xFF151C2B)    // Figma Nav/Filter fill
+val HetrixDarkSurfaceContainerHigh = Color(0xFF252F45)
+val HetrixDarkSurfaceContainerHighest = Color(0xFF303B50)
 
-// Surface Container Tokens (Light Theme - Crisp White Slate)
-val HetrixLightBackground = Color(0xFFF8FAFC)
-val HetrixLightOnBackground = Color(0xFF0F172A)
+// Light Theme Surfaces (White #FFFFFF, Card #F4F6FA, Nav #EDF1F6, Border #EDF1F6)
+val HetrixLightBackground = Color(0xFFFFFFFF)
+val HetrixLightOnBackground = Color(0xFF0B0F19)
 val HetrixLightSurface = Color(0xFFFFFFFF)
-val HetrixLightOnSurface = Color(0xFF0F172A)
-val HetrixLightSurfaceVariant = Color(0xFFF1F5F9)
-val HetrixLightOnSurfaceVariant = Color(0xFF64748B)
+val HetrixLightOnSurface = Color(0xFF0B0F19)
+val HetrixLightSurfaceVariant = Color(0xFFF4F6FA)
+val HetrixLightOnSurfaceVariant = Color(0xFF68768E)
 val HetrixLightOutline = Color(0xFFCBD5E1)
-val HetrixLightOutlineVariant = Color(0xFFE2E8F0)
+val HetrixLightOutlineVariant = Color(0xFFEDF1F6)
 
 val HetrixLightSurfaceContainerLowest = Color(0xFFFFFFFF)
-val HetrixLightSurfaceContainerLow = Color(0xFFF8FAFC)
-val HetrixLightSurfaceContainer = Color(0xFFF1F5F9)
+val HetrixLightSurfaceContainerLow = Color(0xFFF4F6FA) // Figma Card fill
+val HetrixLightSurfaceContainer = Color(0xFFEDF1F6)    // Figma Nav/Filter fill
 val HetrixLightSurfaceContainerHigh = Color(0xFFE2E8F0)
 val HetrixLightSurfaceContainerHighest = Color(0xFFCBD5E1)
 
-// Semantic Monitoring Status Tokens (60-30-10 Visual System)
+// Semantic Monitoring Status Tokens (60-30-10 Rule)
 val StatusOperationalGreen = Color(0xFF10B981) // Clean / Operational Emerald
 val StatusDegradedAmber = Color(0xFFF59E0B)    // Degraded / Warning Amber
 val StatusDownCrimson = Color(0xFFEF4444)      // Down / Outage / Blacklisted Crimson
-val StatusNeutralGray = Color(0xFF64748B)      // Unknown / Stale / Paused Slate
+val StatusNeutralGray = Color(0xFF68768E)      // Unknown / Stale Slate
+
+val StatusOperationalBgDark = Color(0xFF12382F)
+val StatusDegradedBgDark = Color(0xFF3D2E1E)
+val StatusDownBgDark = Color(0xFF3D222B)
+
+val StatusOperationalBgLight = Color(0xFFDDF6EC)
+val StatusDegradedBgLight = Color(0xFFFEF3E2)
+val StatusDownBgLight = Color(0xFFFCE8EB)
 
 // Light Theme contrast-adjusted versions
-val StatusOperationalGreenLight = Color(0xFF059669)
+val StatusOperationalGreenLight = Color(0xFF087F5B)
 val StatusDegradedAmberLight = Color(0xFFD97706)
 val StatusDownCrimsonLight = Color(0xFFDC2626)
 

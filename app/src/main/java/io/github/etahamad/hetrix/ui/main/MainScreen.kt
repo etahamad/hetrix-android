@@ -93,7 +93,7 @@ fun MainScreen(
         contentWindowInsets = WindowInsets(0.dp),
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 tonalElevation = 0.dp,
                 modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
