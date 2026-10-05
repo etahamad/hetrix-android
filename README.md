@@ -85,8 +85,9 @@ HetriX communicates with the official HetrixTools REST API v3:
 - **Authentication**: `Authorization: Bearer <API_TOKEN>`
 
 ### Connected Endpoints:
-1. `GET uptime/monitors` — Retrieves list of uptime/heartbeat monitors, labels, URLs/IPs, status, and uptime percentages.
-2. `GET uptime/monitors/{monitor_id}/server-agent-metrics` — Retrieves real-time telemetry metrics (CPU %, RAM %, Swap %, Disk %, Load Average).
+1. `GET /v3/ping` — Validates API token and confirms server availability (`status: "ok", message: "pong"`).
+2. `GET /v3/uptime-monitors` — Retrieves list of uptime/heartbeat monitors, labels, URLs/IPs, status, and uptime percentages.
+3. `GET /v3/uptime-monitors/{monitor_id}/server-agent/metrics` — Retrieves real-time telemetry metrics (CPU %, RAM %, Swap %, Disk %, Load Average).
 
 ---
 
