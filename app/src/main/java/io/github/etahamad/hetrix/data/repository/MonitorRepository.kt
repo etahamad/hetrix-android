@@ -4,7 +4,6 @@ import io.github.etahamad.hetrix.data.api.HetrixApiService
 import io.github.etahamad.hetrix.data.api.NetworkException
 import io.github.etahamad.hetrix.data.api.NetworkUtils
 import io.github.etahamad.hetrix.data.local.TokenStorage
-import io.github.etahamad.hetrix.data.model.MonitorDto
 import io.github.etahamad.hetrix.data.model.ServerMetrics
 import io.github.etahamad.hetrix.data.model.ServerMonitor
 import io.github.etahamad.hetrix.data.model.toDomain
@@ -63,18 +62,11 @@ class MonitorRepositoryImpl(
 
         try {
             val bearerHeader = "Bearer $cleanToken"
-            // Call API with the token override to test validity
-            val response = apiService.getMonitors(authOverride = bearerHeader)
-            if (response.isSuccessful) {
+            val response = apiService.ping(authOverride = bearerHeader)
+            if (response.isSuccessful && response.body()?.status == "ok") {
                 Result.success(true)
             } else {
-                // Also check if monitors are wrapped in envelope
-                val envelopeResponse = apiService.getMonitorsEnvelope(authOverride = bearerHeader)
-                if (envelopeResponse.isSuccessful) {
-                    Result.success(true)
-                } else {
-                    Result.failure(NetworkUtils.parseHttpError(response))
-                }
+                Result.failure(NetworkUtils.parseHttpError(response))
             }
         } catch (e: Exception) {
             val mappedException = if (e is NetworkException) e else NetworkException.ApiException(-1, e.localizedMessage ?: "Validation failed", e)
@@ -94,29 +86,13 @@ class MonitorRepositoryImpl(
 
     private suspend fun fetchMonitorsInternal(fetchLiveMetrics: Boolean): Result<List<ServerMonitor>> = withContext(Dispatchers.IO) {
         try {
-            val rawMonitors: List<MonitorDto> = try {
-                val directResponse = apiService.getMonitors()
-                if (directResponse.isSuccessful) {
-                    directResponse.body().orEmpty()
-                } else {
-                    val envelopeResponse = apiService.getMonitorsEnvelope()
-                    if (envelopeResponse.isSuccessful) {
-                        val body = envelopeResponse.body()
-                        body?.monitors?.ifEmpty { body.data }.orEmpty()
-                    } else {
-                        throw NetworkUtils.parseHttpError(directResponse)
-                    }
-                }
-            } catch (e: Exception) {
-                // If direct deserialization failed because response is an envelope
-                val envelopeResponse = apiService.getMonitorsEnvelope()
-                if (envelopeResponse.isSuccessful) {
-                    val body = envelopeResponse.body()
-                    body?.monitors?.ifEmpty { body.data }.orEmpty()
-                } else {
-                    throw if (e is NetworkException) e else NetworkUtils.parseHttpError(envelopeResponse)
-                }
+            val response = apiService.getUptimeMonitors()
+            if (!response.isSuccessful) {
+                throw NetworkUtils.parseHttpError(response)
             }
+
+            val body = response.body()
+            val rawMonitors = body?.monitors?.ifEmpty { body.data }.orEmpty()
 
             // Convert to domain models
             val initialMonitors = rawMonitors.map { it.toDomain() }
@@ -167,12 +143,9 @@ class MonitorRepositoryImpl(
     private suspend fun fetchMetricsDirect(monitorId: String): ServerMetrics? {
         val response = apiService.getServerAgentMetrics(monitorId)
         if (response.isSuccessful) {
-            return response.body()?.toDomain()
-        }
-        val envelopeResponse = apiService.getServerAgentMetricsEnvelope(monitorId)
-        if (envelopeResponse.isSuccessful) {
-            val body = envelopeResponse.body()
-            return (body?.metrics ?: body?.data)?.toDomain()
+            val body = response.body()
+            val points = body?.metrics?.ifEmpty { body.data }.orEmpty()
+            return points.firstOrNull()?.toDomain()
         }
         return null
     }

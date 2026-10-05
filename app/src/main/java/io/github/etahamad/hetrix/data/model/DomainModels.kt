@@ -65,17 +65,24 @@ fun MonitorDto.toDomain(overrideMetrics: ServerMetrics? = null): ServerMonitor {
         ?: "Monitor $effectiveId"
 
     val effectiveTarget = target?.takeIf { it.isNotBlank() }
+        ?: resolveAddress?.takeIf { it.isNotBlank() }
         ?: url?.takeIf { it.isNotBlank() }
         ?: ipOrHost?.takeIf { it.isNotBlank() }
         ?: "N/A"
 
-    val effectiveType = type?.replaceFirstChar { it.uppercase() } ?: "Server"
-    val parsedStatus = MonitorStatus.fromString(status)
-    val parsedUptime = uptime ?: uptimeRatio?.let { it * 100.0 } ?: 100.0
-    val parsedLastCheck = lastCheckTimestamp ?: lastStatusChangeTimestamp ?: System.currentTimeMillis()
-    val agentPresent = hasAgent == true || agentInstalled == true || serverAgentMetrics != null
-
-    val effectiveMetrics = overrideMetrics ?: serverAgentMetrics?.toDomain()
+    val effectiveType = type?.replaceFirstChar { it.uppercase() } ?: "Website"
+    
+    // Status resolution prioritizing uptime_status ('up', 'down') and monitor_status ('active', 'paused')
+    val rawStatus = when {
+        monitorStatus?.equals("paused", ignoreCase = true) == true -> "paused"
+        uptimeStatus != null -> uptimeStatus
+        status != null -> status
+        else -> "unknown"
+    }
+    val parsedStatus = MonitorStatus.fromString(rawStatus)
+    val parsedUptime = parsedUptime ?: (uptimeRatio?.let { it * 100.0 } ?: 100.0)
+    val parsedLastCheck = lastCheckTimestamp ?: lastStatusChangeTimestamp ?: createdAt ?: System.currentTimeMillis()
+    val agentPresent = hasAgent == true || agentInstalled == true || !agentId.isNullOrBlank()
 
     return ServerMonitor(
         id = effectiveId,
@@ -84,23 +91,27 @@ fun MonitorDto.toDomain(overrideMetrics: ServerMetrics? = null): ServerMonitor {
         target = effectiveTarget,
         status = parsedStatus,
         uptimePercentage = parsedUptime.coerceIn(0.0, 100.0),
-        responseTimeMs = responseTimeMs,
+        responseTimeMs = averageLocationPing,
         lastCheckTimestamp = parsedLastCheck,
         hasAgent = agentPresent,
-        metrics = effectiveMetrics
+        metrics = overrideMetrics
     )
 }
 
 /**
- * Maps [AgentMetricsDto] to [ServerMetrics] domain model.
+ * Maps [AgentMetricsPointDto] to [ServerMetrics] domain model.
  */
-fun AgentMetricsDto.toDomain(): ServerMetrics {
-    val cpu = (cpuUsage ?: cpuUsageAlt ?: 0.0).toFloat().coerceIn(0f, 100f)
-    val ram = (ramUsage ?: ramUsageAlt ?: ramUsedPercent ?: 0.0).toFloat().coerceIn(0f, 100f)
-    val swap = (swapUsage ?: swapUsageAlt ?: swapUsedPercent)?.toFloat()?.coerceIn(0f, 100f)
-    val disk = (diskUsage ?: diskUsageAlt ?: diskUsedPercent ?: 0.0).toFloat().coerceIn(0f, 100f)
-    val load = loadAverage?.takeIf { it.isNotBlank() } ?: loadAlt?.takeIf { it.isNotBlank() }
-    val time = timestamp ?: updatedAt ?: System.currentTimeMillis()
+fun AgentMetricsPointDto.toDomain(): ServerMetrics {
+    val cpu = (cpuUsage ?: 0.0).toFloat().coerceIn(0f, 100f)
+    val ram = (ramUsage ?: 0.0).toFloat().coerceIn(0f, 100f)
+    val swap = swapUsage?.toFloat()?.coerceIn(0f, 100f)
+    val disk = (diskUsage ?: 0.0).toFloat().coerceIn(0f, 100f)
+    val load = if (load1 != null) {
+        String.format(java.util.Locale.US, "%.2f %.2f %.2f", load1, load5 ?: load1, load15 ?: load1)
+    } else {
+        null
+    }
+    val time = timestamp ?: System.currentTimeMillis()
 
     return ServerMetrics(
         cpuPercent = cpu,

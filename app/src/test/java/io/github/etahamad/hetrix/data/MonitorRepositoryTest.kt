@@ -3,11 +3,12 @@ package io.github.etahamad.hetrix.data
 import io.github.etahamad.hetrix.data.api.HetrixApiService
 import io.github.etahamad.hetrix.data.api.NetworkException
 import io.github.etahamad.hetrix.data.local.TokenStorage
-import io.github.etahamad.hetrix.data.model.AgentMetricsApiResponseDto
-import io.github.etahamad.hetrix.data.model.AgentMetricsDto
+import io.github.etahamad.hetrix.data.model.AgentMetricsPointDto
 import io.github.etahamad.hetrix.data.model.MonitorDto
 import io.github.etahamad.hetrix.data.model.MonitorStatus
-import io.github.etahamad.hetrix.data.model.MonitorsApiResponseDto
+import io.github.etahamad.hetrix.data.model.PingResponseDto
+import io.github.etahamad.hetrix.data.model.ServerAgentMetricsResponseDto
+import io.github.etahamad.hetrix.data.model.UptimeMonitorsResponseDto
 import io.github.etahamad.hetrix.data.repository.MonitorRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -50,28 +50,30 @@ class MonitorRepositoryTest {
     fun getMonitors_returnsMappedServerMonitors_whenSuccessful() = runTest {
         fakeTokenStorage.saveToken("valid_test_token")
         fakeApiService.monitorsResponse = Response.success(
-            listOf(
-                MonitorDto(
-                    id = "srv-101",
-                    name = "Production API Gateway",
-                    type = "service",
-                    target = "https://api.example.com/health",
-                    status = "online",
-                    uptime = 99.99,
-                    responseTimeMs = 38,
-                    lastCheckTimestamp = 1700000000L,
-                    hasAgent = true
-                ),
-                MonitorDto(
-                    id = "srv-102",
-                    name = "Primary Database Node",
-                    type = "server",
-                    target = "10.0.1.5",
-                    status = "offline",
-                    uptime = 98.45,
-                    responseTimeMs = null,
-                    lastCheckTimestamp = 1700000000L,
-                    hasAgent = false
+            UptimeMonitorsResponseDto(
+                monitors = listOf(
+                    MonitorDto(
+                        id = "srv-101",
+                        name = "Production API Gateway",
+                        type = "website",
+                        target = "https://api.example.com/health",
+                        uptimeStatus = "up",
+                        uptimeRatio = 0.9999,
+                        responseTimeMs = 38,
+                        lastCheckTimestamp = 1700000000L,
+                        hasAgent = true
+                    ),
+                    MonitorDto(
+                        id = "srv-102",
+                        name = "Primary Database Node",
+                        type = "server",
+                        target = "10.0.1.5",
+                        uptimeStatus = "down",
+                        uptimeRatio = 0.9845,
+                        responseTimeMs = null,
+                        lastCheckTimestamp = 1700000000L,
+                        hasAgent = false
+                    )
                 )
             )
         )
@@ -98,7 +100,7 @@ class MonitorRepositoryTest {
 
     @Test
     fun validateToken_returnsSuccess_whenApiResponds200() = runTest {
-        fakeApiService.monitorsResponse = Response.success(emptyList())
+        fakeApiService.pingResponse = Response.success(PingResponseDto(status = "ok", message = "pong"))
 
         val result = repository.validateToken("valid_token_123")
 
@@ -110,7 +112,7 @@ class MonitorRepositoryTest {
     fun validateToken_returnsUnauthorizedException_whenApiResponds401() = runTest {
         val errorJson = """{"status":"ERROR","error":"Invalid API Key provided"}"""
         val errorBody = errorJson.toResponseBody("application/json".toMediaType())
-        fakeApiService.monitorsResponse = Response.error(401, errorBody)
+        fakeApiService.pingResponse = Response.error(401, errorBody)
 
         val result = repository.validateToken("bad_token")
 
@@ -123,13 +125,19 @@ class MonitorRepositoryTest {
     @Test
     fun getMetricsForMonitor_returnsDomainMetrics_whenSuccessful() = runTest {
         fakeApiService.metricsResponse = Response.success(
-            AgentMetricsDto(
-                cpuUsage = 42.5,
-                ramUsage = 68.2,
-                diskUsage = 55.0,
-                swapUsage = 12.0,
-                loadAverage = "0.45 0.38 0.22",
-                timestamp = 1700000000L
+            ServerAgentMetricsResponseDto(
+                metrics = listOf(
+                    AgentMetricsPointDto(
+                        cpuUsage = 42.5,
+                        ramUsage = 68.2,
+                        diskUsage = 55.0,
+                        swapUsage = 12.0,
+                        load1 = 0.45,
+                        load5 = 0.38,
+                        load15 = 0.22,
+                        timestamp = 1700000000L
+                    )
+                )
             )
         )
 
@@ -157,32 +165,20 @@ class MonitorRepositoryTest {
     }
 
     private class FakeHetrixApiService : HetrixApiService {
-        var monitorsResponse: Response<List<MonitorDto>> = Response.success(emptyList())
-        var metricsResponse: Response<AgentMetricsDto> = Response.success(AgentMetricsDto())
+        var pingResponse: Response<PingResponseDto> = Response.success(PingResponseDto(status = "ok", message = "pong"))
+        var monitorsResponse: Response<UptimeMonitorsResponseDto> = Response.success(UptimeMonitorsResponseDto())
+        var metricsResponse: Response<ServerAgentMetricsResponseDto> = Response.success(ServerAgentMetricsResponseDto())
 
-        override suspend fun getMonitors(authOverride: String?): Response<List<MonitorDto>> {
+        override suspend fun ping(authOverride: String?): Response<PingResponseDto> {
+            return pingResponse
+        }
+
+        override suspend fun getUptimeMonitors(authOverride: String?): Response<UptimeMonitorsResponseDto> {
             return monitorsResponse
         }
 
-        override suspend fun getMonitorsEnvelope(authOverride: String?): Response<MonitorsApiResponseDto> {
-            return if (monitorsResponse.isSuccessful) {
-                Response.success(MonitorsApiResponseDto(status = "SUCCESS", monitors = monitorsResponse.body().orEmpty()))
-            } else {
-                val errorBody = "{\"status\":\"ERROR\",\"error\":\"Invalid API Key provided\"}".toResponseBody("application/json".toMediaType())
-                Response.error(monitorsResponse.code(), errorBody)
-            }
-        }
-
-        override suspend fun getServerAgentMetrics(monitorId: String, authOverride: String?): Response<AgentMetricsDto> {
+        override suspend fun getServerAgentMetrics(monitorId: String, authOverride: String?): Response<ServerAgentMetricsResponseDto> {
             return metricsResponse
-        }
-
-        override suspend fun getServerAgentMetricsEnvelope(monitorId: String, authOverride: String?): Response<AgentMetricsApiResponseDto> {
-            return if (metricsResponse.isSuccessful) {
-                Response.success(AgentMetricsApiResponseDto(status = "SUCCESS", metrics = metricsResponse.body()))
-            } else {
-                Response.error(metricsResponse.code(), "".toResponseBody(null))
-            }
         }
     }
 }

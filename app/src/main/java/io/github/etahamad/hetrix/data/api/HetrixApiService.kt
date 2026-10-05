@@ -1,9 +1,8 @@
 package io.github.etahamad.hetrix.data.api
 
-import io.github.etahamad.hetrix.data.model.AgentMetricsApiResponseDto
-import io.github.etahamad.hetrix.data.model.AgentMetricsDto
-import io.github.etahamad.hetrix.data.model.MonitorDto
-import io.github.etahamad.hetrix.data.model.MonitorsApiResponseDto
+import io.github.etahamad.hetrix.data.model.PingResponseDto
+import io.github.etahamad.hetrix.data.model.ServerAgentMetricsResponseDto
+import io.github.etahamad.hetrix.data.model.UptimeMonitorsResponseDto
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -16,36 +15,29 @@ import retrofit2.http.Path
 interface HetrixApiService {
 
     /**
-     * Retrieves all uptime and heartbeat monitors registered to the account.
+     * Pings the HetrixTools API to verify API key validity and service availability.
      */
-    @GET("uptime/monitors")
-    suspend fun getMonitors(
+    @GET("ping")
+    suspend fun ping(
         @Header("Authorization") authOverride: String? = null
-    ): Response<List<MonitorDto>>
+    ): Response<PingResponseDto>
 
     /**
-     * Fallback endpoint if monitors are wrapped inside a JSON response object.
+     * Retrieves all uptime and heartbeat monitors registered to the account.
+     * Official endpoint: GET /v3/uptime-monitors
      */
-    @GET("uptime/monitors")
-    suspend fun getMonitorsEnvelope(
+    @GET("uptime-monitors")
+    suspend fun getUptimeMonitors(
         @Header("Authorization") authOverride: String? = null
-    ): Response<MonitorsApiResponseDto>
+    ): Response<UptimeMonitorsResponseDto>
 
     /**
      * Retrieves real-time server agent performance metrics for a specific monitor.
+     * Official endpoint: GET /v3/uptime-monitors/{monitor_id}/server-agent/metrics
      */
-    @GET("uptime/monitors/{monitor_id}/server-agent-metrics")
+    @GET("uptime-monitors/{monitor_id}/server-agent/metrics")
     suspend fun getServerAgentMetrics(
         @Path("monitor_id") monitorId: String,
         @Header("Authorization") authOverride: String? = null
-    ): Response<AgentMetricsDto>
-
-    /**
-     * Fallback endpoint if agent metrics are wrapped inside a JSON response object.
-     */
-    @GET("uptime/monitors/{monitor_id}/server-agent-metrics")
-    suspend fun getServerAgentMetricsEnvelope(
-        @Path("monitor_id") monitorId: String,
-        @Header("Authorization") authOverride: String? = null
-    ): Response<AgentMetricsApiResponseDto>
+    ): Response<ServerAgentMetricsResponseDto>
 }
