@@ -9,7 +9,9 @@ import io.github.etahamad.hetrix.data.model.ReputationStatus
 import io.github.etahamad.hetrix.data.model.ServerMonitor
 import io.github.etahamad.hetrix.data.repository.MonitorRepository
 import io.github.etahamad.hetrix.ui.theme.AppThemeMode
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
 /**
@@ -155,28 +158,37 @@ class MonitorsViewModel(
             }
             _errorState.value = null
 
-            // Launch uptime monitors and blacklist monitors concurrently
-            launch {
-                repository.getMonitors(fetchLiveMetrics = true).collect { result ->
-                    result.onSuccess { monitors ->
-                        _rawMonitors.value = monitors
-                        _errorState.value = null
-                    }.onFailure { error ->
-                        handleError(error)
+            try {
+                coroutineScope {
+                    val monitorsJob = launch {
+                        repository.getMonitors(fetchLiveMetrics = true).collect { result ->
+                            result.onSuccess { monitors ->
+                                _rawMonitors.value = monitors
+                                _errorState.value = null
+                            }.onFailure { error ->
+                                handleError(error)
+                            }
+                        }
                     }
-                }
-            }
 
-            launch {
-                repository.getBlacklistMonitors().collect { result ->
-                    result.onSuccess { bl ->
-                        _rawBlacklist.value = bl
+                    val blacklistJob = launch {
+                        repository.getBlacklistMonitors().collect { result ->
+                            result.onSuccess { bl ->
+                                _rawBlacklist.value = bl
+                            }
+                        }
                     }
-                }
-            }
 
-            _isLoading.value = false
-            _isRefreshing.value = false
+                    joinAll(monitorsJob, blacklistJob)
+                }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    handleError(e)
+                }
+            } finally {
+                _isLoading.value = false
+                _isRefreshing.value = false
+            }
         }
     }
 

@@ -111,6 +111,13 @@ fun HetrixTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                window.statusBarColor = android.graphics.Color.TRANSPARENT
+                window.navigationBarColor = android.graphics.Color.TRANSPARENT
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    window.isNavigationBarContrastEnforced = false
+                    window.isStatusBarContrastEnforced = false
+                }
                 WindowCompat.getInsetsController(window, view).apply {
                     isAppearanceLightStatusBars = !isDark
                     isAppearanceLightNavigationBars = !isDark

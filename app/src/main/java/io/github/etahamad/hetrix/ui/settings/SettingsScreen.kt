@@ -710,10 +710,6 @@ fun SettingsScreen(
                         .padding(top = 4.dp, bottom = 12.dp)
                 )
             }
-
-            item(key = "bottom_spacer") {
-                Spacer(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars))
-            }
         }
     }
 
