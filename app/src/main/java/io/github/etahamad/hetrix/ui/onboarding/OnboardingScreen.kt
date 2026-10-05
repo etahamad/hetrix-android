@@ -111,21 +111,16 @@ fun OnboardingScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val isDarkTheme = MaterialTheme.colorScheme.background == Color(0xFF0B0F19)
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = if (isDarkTheme) Color(0xFF093322) else Color(0xFFDDF6EC),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (isDarkTheme) Color(0xFF10B981).copy(alpha = 0.4f) else Color(0xFF087F5B).copy(alpha = 0.2f)
-                        ),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
                         modifier = Modifier.size(32.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                painter = androidx.compose.ui.res.painterResource(id = io.github.etahamad.hetrix.R.drawable.ic_pulse),
+                                imageVector = Icons.AutoMirrored.Filled.ShowChart,
                                 contentDescription = null,
-                                tint = if (isDarkTheme) Color(0xFF10B981) else Color(0xFF087F5B),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
