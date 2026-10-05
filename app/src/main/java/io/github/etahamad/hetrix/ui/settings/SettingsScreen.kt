@@ -688,7 +688,7 @@ fun SettingsScreen(
                                     color = textPrimary
                                 )
                                 Text(
-                                    text = "Client-side only · GPL-3.0",
+                                    text = "Unofficial Android App · GPL-3.0",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = textMuted
                                 )

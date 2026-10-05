@@ -2,137 +2,128 @@
 
 # HetriX
 
-**Modern, open-source Android monitoring client for [HetrixTools](https://hetrixtools.com).**
+**Unofficial Android client for [HetrixTools](https://hetrixtools.com).**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0)
 [![Android](https://img.shields.io/badge/Android-API%2026%2B%20(8.0%2B)-3DDC84.svg?style=flat-square&logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF.svg?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4.svg?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![Architecture](https://img.shields.io/badge/Architecture-MVVM%20%2B%20UDF-FF6F00.svg?style=flat-square)](https://developer.android.com/topic/architecture)
 
 </div>
 
 ---
 
-## 🚀 Overview
+## Overview
 
-**HetriX** is an open-source, production-grade Android application engineered for DevOps engineers, sysadmins, and webmasters who rely on **HetrixTools** for server telemetry, uptime monitoring, and reputation alerting. 
+HetriX is an open-source, unofficial Android client for the [HetrixTools](https://hetrixtools.com) monitoring service. It connects directly to the official HetrixTools REST API v3 to display uptime status, server resource metrics, and blacklist reputation on Android devices.
 
-Engineered with Kotlin and Jetpack Compose Material 3 according to modern Android Design Guidelines and the 60-30-10 visual balance rule, HetriX provides a local-first, zero-telemetry client that connects directly to the HetrixTools v3 API with hardware-backed encryption.
-
----
-
-## ✨ 4-Destination Workspace Architecture
-
-HetriX is organized into four persistent primary destinations with an edge-to-edge Material 3 layout:
-
-### 1. 🏠 Home — Unified Dashboard & Uptime
-- **Global Health Card**: At-a-glance fleet status with operational and incident variations (e.g. `✓ All Systems Operational` vs `! 2 Outages Detected`).
-- **24-Hour Availability Blocks**: Micro-block visual history (`▰ ▰ ▰`) paired with exact percentages (e.g., `99.98%`).
-- **Real-Time Telemetry**: Real-time response times (ms), last checked timestamps, target URLs/IPs, and check intervals.
-- **Global Location Checks**: Expandable multi-point geographic checks (Dallas, Frankfurt, London, Singapore, Sydney, etc.) with individual status and latency.
-- **Search & Filter**: Search by monitor name or target IP/host, with instant filters for All, Down, and Operational.
-
-### 2. 🖥️ Servers — Cross-Fleet Resource Telemetry
-- **Fleet Aggregate Status**: Fleet-wide average utilization meters for CPU, RAM, and Disk capacity.
-- **Per-Server Metrics Cards**:
-  - **CPU Utilization**: Live gauge + smooth canvas-rendered historical sparkline chart.
-  - **RAM & Disk Breakdown**: Tabular byte gauges displaying exact used vs. total values (e.g., `5.8 / 16.0 GB`).
-  - **Swap Memory**: Expandable auxiliary memory inspection.
-  - **System Vitals**: Load Average (1m / 5m / 15m), OS kernel version, running system uptime, and active open ports.
-  - **Network I/O Throughput**: Live directional throughput rates (`↓ in • ↑ out`).
-
-### 3. 🛡️ Reputation — Blacklist & Microsoft SNDS
-- **Reputation Health Banner**: Instant overview of clean IPs vs active listings across global RBLs and Microsoft SNDS.
-- **Priority Incident Sorting**: Automatically prioritizes listed and degraded IPs at the top (`Listed` → `Warning` → `Unknown` → `Clean`).
-- **Listed Ratio Badges**: Clear `0/32 Listed` or `2/32 Listed` badges with direct links to HetrixTools delisting guides.
-- **Microsoft SNDS Status**: Explicit status indicators (`Clean`, `Warning`, or `Not available`).
-
-### 4. ⚙️ Settings & API Vault
-- **API Vault Card**: Secure local KeyStore AES-256 GCM encrypted token storage with masked preview.
-- **Live Connection Diagnostics**: "Test Connection" tool showing exact ping latency in milliseconds.
-- **Key Management**: Replace API Key modal with clipboard paste support and secure input masking.
-- **Appearance & Preferences**: Switch between System Default, Dark Slate (`#0B0F19`), and Crisp Light (`#FFFFFF`).
-- **Auto-Refresh Scheduling**: Configurable polling intervals (Manual, 30s, 1m, 2m, 5m).
-- **Privacy & Storage**: Clear cached telemetry data and Disconnect actions.
+The app operates strictly client-side without any third-party backend, tracking, or telemetry. API keys are stored locally on the device using Android's EncryptedSharedPreferences backed by the Android Keystore (AES-256 GCM).
 
 ---
 
-## 🎨 Visual System & 60-30-10 Palette
+## Features
 
-HetriX adheres to a strict 60–30–10 visual hierarchy:
+### 1. Home (Uptime Monitoring)
+- Overall infrastructure health overview with incident badges.
+- 24-hour availability history blocks and availability percentages.
+- Response times, check intervals, and last-checked timestamps.
+- Multi-location check results (e.g., Dallas, Frankfurt, London, Singapore, Sydney, Tokyo).
+- Search and filtering by status (All, Down, Operational).
 
-| Role | Dark Mode | Light Mode |
-|---|---|---|
-| **60% Background** | Deep Slate `#0B0F19` | Crisp White `#F8FAFC` |
-| **30% Surfaces & Cards** | Navy-Gray `#1E2638` | Pale Neutral `#FFFFFF` |
-| **10% Operational Accent** | Emerald Green `#10B981` | Emerald Green `#059669` |
-| **10% Degraded / Warning** | Amber `#F59E0B` | Amber `#D97706` |
-| **10% Down / Blacklisted** | Crimson `#EF4444` | Crimson `#DC2626` |
-| **Neutral / Inactive** | Slate `#64748B` | Slate `#94A3B8` |
+### 2. Servers (Resource Metrics)
+- Fleet-wide average utilization metrics for CPU, RAM, and disk storage.
+- Detailed metrics per server:
+  - CPU usage percentage and historical sparkline trend graph.
+  - RAM and disk space breakdown (used vs total).
+  - Swap space usage and system load averages (1m, 5m, 15m).
+  - Operating system release, kernel, and system uptime.
+  - Live inbound and outbound network throughput rates.
 
-- **Typography**: Roboto with tabular lining numerals for consistent metric scanning.
-- **Accessibility**: Minimum 48dp touch targets, TalkBack semantics, high-contrast labels, and font scaling support.
+### 3. Reputation (Blacklist & SNDS)
+- Blacklist monitor summary across configured IPv4/IPv6 addresses and hostnames.
+- Immediate sorting for listed and degraded hosts.
+- Listing counts per host with links to HetrixTools delisting guides.
+- Microsoft SNDS status reporting.
+
+### 4. Settings
+- API key management with local validation and secure masked storage.
+- Built-in connection testing tool with latency measurement.
+- Theme selection (System Default, Dark, Light).
+- Configurable foreground auto-refresh interval (Manual, 30s, 1m, 5m).
+- Local cache clearance and account disconnect options.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
+
+The project follows the standard Android Architecture Guidelines using MVVM and Unidirectional Data Flow (UDF):
 
 ```mermaid
 flowchart TD
-    subgraph UI_Layer ["🎨 UI Layer (Jetpack Compose M3)"]
+    subgraph UI_Layer ["UI Layer (Jetpack Compose M3)"]
         A[MainActivity] --> B[MainScreen]
         B --> C[HomeScreen]
         B --> D[MetricsScreen]
         B --> E[ReputationScreen]
         B --> F[SettingsScreen]
-        B --> G[SparklineChart / ServerCard / MetricBar]
     end
 
-    subgraph State_Layer ["🧠 State & ViewModel Layer"]
+    subgraph State_Layer ["State & ViewModel"]
         H[MonitorsViewModel]
         H -->|StateFlow&lt;MonitorsUiState&gt;| B
-        B -->|User Intents / Refresh / Filters| H
+        B -->|User Actions / Refresh / Filters| H
     end
 
-    subgraph Data_Layer ["📦 Domain & Repository Layer"]
+    subgraph Data_Layer ["Domain & Repository"]
         I[MonitorRepository]
         H --> I
         I --> J[HetrixApiService]
         I --> K[EncryptedTokenStorage]
     end
 
-    subgraph Network_Layer ["🌐 Network & Secure Storage"]
-        J --> L[OkHttp3 + AuthInterceptor]
+    subgraph Network_Layer ["Network & Local Security"]
+        J --> L[OkHttp + AuthInterceptor]
         L --> M[HetrixTools API v3]
         K --> N[Android KeyStore AES-256 GCM]
     end
 ```
 
+### Tech Stack
+- **Language**: Kotlin 2.0.21
+- **UI Toolkit**: Jetpack Compose with Material 3
+- **Asynchronous**: Kotlin Coroutines & StateFlow
+- **Networking**: Retrofit 2 & OkHttp 3
+- **Serialization**: Kotlinx Serialization JSON
+- **Security**: AndroidX Security Crypto (`EncryptedSharedPreferences`)
+- **Minimum SDK**: Android 8.0 (API Level 26)
+- **Target SDK**: Android 15 (API Level 35)
+
 ---
 
-## 📡 HetrixTools v3 API Integration
+## API Integration
 
-HetriX connects directly to the official HetrixTools REST API v3:
+HetriX communicates directly with the HetrixTools v3 REST API:
+
 - **Base URL**: `https://api.hetrixtools.com/v3/`
 - **Authentication**: `Authorization: Bearer <API_TOKEN>`
 
-### Endpoints:
-1. `GET /v3/ping` — Validates API token and measures latency (`status: "ok", message: "pong"`).
-2. `GET /v3/uptime-monitors` — Retrieves uptime monitors, target hostnames, response times, and location checks.
-3. `GET /v3/uptime-monitors/{id}/server-agent/metrics` — Retrieves CPU, memory breakdown, disk usage, load averages, open ports, and network interfaces.
-4. `GET /v3/blacklist-monitors` — Retrieves blacklist monitors, detected RBL listings, and Microsoft SNDS statuses.
+### Endpoints Used
+- `GET /v3/ping` — Validates credentials and measures roundtrip latency.
+- `GET /v3/uptime-monitors` — Fetches uptime monitors, target hosts, and multi-location checks.
+- `GET /v3/uptime-monitors/{id}/server-agent/metrics` — Fetches CPU, memory, disk, load averages, and network interfaces.
+- `GET /v3/blacklist-monitors` — Fetches blacklist check results and Microsoft SNDS statuses.
 
 ---
 
-## 🛠️ Getting Started & Build Instructions
+## Build Instructions
 
-### Prerequisites
-- Android Studio Meerkat (2024.3+) or Ladybug (2024.2+)
-- JDK 17 or JDK 21
-- Android SDK (API 35 compile target, min SDK API 26)
+### Requirements
+- Android Studio Ladybug (2024.2+) or newer
+- JDK 17
+- Android SDK with API Level 35
 
-### Building the Project
+### Building from Source
+
 ```bash
 # Clone the repository
 git clone https://github.com/etahamad/hetrix-android.git
@@ -141,19 +132,34 @@ cd hetrix-android
 # Build Debug APK
 ./gradlew assembleDebug
 
+# Build Release APK
+./gradlew assembleRelease
+
 # Run Unit Tests
 ./gradlew testDebugUnitTest
 ```
 
+The compiled APKs will be located at:
+- Debug: `app/build/outputs/apk/debug/app-debug.apk`
+- Release: `app/build/outputs/apk/release/app-release.apk`
+
 ---
 
-## 📁 Project Structure
+## Continuous Integration & Releases
+
+- **CI Workflow** (`.github/workflows/ci.yml`): Runs unit tests and builds the debug APK on every push and pull request to `main`. The debug APK is uploaded as a build artifact.
+- **Release Workflow** (`.github/workflows/release.yml`): Dispatched manually to compile a minified release APK and publish a tagged GitHub Release with the APK attached.
+
+---
+
+## Project Structure
 
 ```
 hetrix-android/
+├── .github/workflows/         # CI and Release automation
 ├── app/
-│   ├── build.gradle.kts
-│   ├── proguard-rules.pro
+│   ├── build.gradle.kts       # App module configuration
+│   ├── proguard-rules.pro     # R8/ProGuard rules
 │   └── src/
 │       ├── main/
 │       │   ├── AndroidManifest.xml
@@ -161,36 +167,35 @@ hetrix-android/
 │       │   │   ├── HetrixApplication.kt
 │       │   │   ├── MainActivity.kt
 │       │   │   ├── data/
-│       │   │   │   ├── api/                   # Retrofit service, interceptors, error mapping
-│       │   │   │   ├── local/                 # EncryptedSharedPreferences (AES-256 GCM)
-│       │   │   │   ├── model/                 # Kotlinx Serialization DTOs & Domain mappers
-│       │   │   │   └── repository/            # MonitorRepository & cache management
+│       │   │   │   ├── api/          # Retrofit interface and interceptors
+│       │   │   │   ├── local/        # EncryptedSharedPreferences wrapper
+│       │   │   │   ├── model/        # Data transfer objects and domain models
+│       │   │   │   └── repository/   # Repository implementation and cache
 │       │   │   └── ui/
-│       │   │       ├── components/            # SparklineChart, ServerCard, MetricBar, StatusBadge
-│       │   │       ├── home/                  # HomeScreen (Global Health, Uptime, Micro-blocks)
-│       │   │       ├── metrics/               # MetricsScreen (Cross-fleet telemetry, Sparklines)
-│       │   │       ├── reputation/            # ReputationScreen (RBL Blacklists, SNDS)
-│       │   │       ├── settings/              # SettingsScreen (API Vault, Diagnostics, Theming)
-│       │   │       ├── main/                  # MainScreen (4-tab Navigation, ViewModel, State)
-│       │   │       ├── theme/                 # 60-30-10 Palette, Typography, Shapes
-│       │   │       └── util/                  # Byte formatting, time utils, ViewModelFactory
-│       │   └── res/                           # Vector icons, app icons, strings
-│       └── test/                              # Repository & ViewModel unit test suites
-├── gradle/
-│   └── libs.versions.toml                     # Version catalog
-├── LICENSE                                    # GNU General Public License v3.0
-└── README.md                                  # Documentation
+│       │   │       ├── components/   # Shared Compose components
+│       │   │       ├── home/         # Uptime dashboard screen
+│       │   │       ├── metrics/      # Server resource telemetry screen
+│       │   │       ├── reputation/   # Blacklist and SNDS screen
+│       │   │       ├── settings/     # Settings and API vault screen
+│       │   │       ├── onboarding/   # API key setup screen
+│       │   │       ├── main/         # Root scaffold and navigation bar
+│       │   │       ├── theme/        # Material 3 colors, typography, shapes
+│       │   │       └── util/         # Formatters and ViewModelFactory
+│       │   └── res/                  # Icons, drawables, and strings
+│       └── test/                     # Unit test suites
+├── gradle/libs.versions.toml          # Gradle version catalog
+├── LICENSE                            # License file
+└── README.md                          # Documentation
 ```
 
 ---
 
-## 📄 License
+## Disclaimer
 
-Distributed under the **GNU General Public License v3.0 (GPLv3)**. See [`LICENSE`](LICENSE) for details.
+This is an unofficial, community-developed open-source client. It is not affiliated with, maintained, authorized, or endorsed by HetrixTools or any of its affiliates. All product names, logos, and brands are property of their respective owners.
 
-```
-HetriX  Copyright (C) 2026 Omar Hamad (etahamad)
-This program comes with ABSOLUTELY NO WARRANTY.
-This is free software, and you are welcome to redistribute it
-under certain conditions; see the LICENSE file for details.
-```
+---
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See the [LICENSE](LICENSE) file for details.
