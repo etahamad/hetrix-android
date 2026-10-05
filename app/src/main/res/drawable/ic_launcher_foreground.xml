@@ -4,39 +4,20 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:scaleX="0.65"
-        android:scaleY="0.65"
-        android:pivotX="54"
-        android:pivotY="54">
-        <!-- Server Rack 1 -->
-        <path
-            android:fillColor="#38BDF8"
-            android:pathData="M28,32h52c2.2,0 4,1.8 4,4v10c0,2.2 -1.8,4 -4,4H28c-2.2,0 -4,-1.8 -4,-4V36c0,-2.2 1.8,-4 4,-4z" />
-        <path
-            android:fillColor="#0284C7"
-            android:pathData="M72,41a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
-        <path
-            android:fillColor="#10B981"
-            android:pathData="M64,41a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
 
-        <!-- Server Rack 2 -->
-        <path
-            android:fillColor="#38BDF8"
-            android:pathData="M28,54h52c2.2,0 4,1.8 4,4v10c0,2.2 -1.8,4 -4,4H28c-2.2,0 -4,-1.8 -4,-4V58c0,-2.2 1.8,-4 4,-4z" />
-        <path
-            android:fillColor="#0284C7"
-            android:pathData="M72,63a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
-        <path
-            android:fillColor="#10B981"
-            android:pathData="M64,63a2,2 0 1,0 4,0a2,2 0 1,0 -4,0" />
+    <!-- Emerald Box Squircle Container from PDF -->
+    <path
+        android:fillColor="#093322"
+        android:strokeColor="#10B981"
+        android:strokeWidth="1.5"
+        android:pathData="M42,28 h24 c7.7,0 14,6.3 14,14 v24 c0,7.7 -6.3,14 -14,14 h-24 c-7.7,0 -14,-6.3 -14,-14 v-24 c0,-7.7 6.3,-14 14,-14 z" />
 
-        <!-- Pulse EKG Line on bottom -->
-        <path
-            android:strokeColor="#14B8A6"
-            android:strokeWidth="3.5"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round"
-            android:pathData="M24,82 L42,82 L47,73 L53,91 L59,77 L64,82 L84,82" />
-    </group>
+    <!-- Pulse / Heartbeat Waveform Line from PDF -->
+    <path
+        android:strokeColor="#10B981"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M35,54 L44,54 L48,40 L53.5,68 L59.5,45 L63.5,54 L73,54" />
+
 </vector>
