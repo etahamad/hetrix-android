@@ -1,0 +1,83 @@
+name: Manual Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      release_title:
+        description: 'Release title'
+        required: false
+        default: 'HetrixTools Release'
+      release_notes:
+        description: 'Release notes / description (leave blank to auto-generate from commits)'
+        required: false
+        default: ''
+      draft:
+        description: 'Create as draft release'
+        type: boolean
+        required: false
+        default: false
+      prerelease:
+        description: 'Mark as pre-release'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  release:
+    name: Build & Publish Release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradlew Executable
+        run: chmod +x ./gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Prepare Release Assets
+        id: assets
+        run: |
+          mkdir -p release_assets
+          TAG="${{ inputs.tag_name }}"
+          cp app/build/outputs/apk/release/app-release.apk "release_assets/hetrix-android-${TAG}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release_assets/hetrix-android-release.apk"
+          echo "Ready to upload release artifacts:"
+          ls -la release_assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          name: ${{ inputs.release_title != '' && inputs.release_title || inputs.tag_name }}
+          body: ${{ inputs.release_notes }}
+          generate_release_notes: ${{ inputs.release_notes == '' }}
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+          files: |
+            release_assets/hetrix-android-${{ inputs.tag_name }}.apk
+            release_assets/hetrix-android-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
