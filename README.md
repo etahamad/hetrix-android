@@ -145,51 +145,6 @@ The compiled APKs will be located at:
 
 ---
 
-## Continuous Integration & Releases
-
-- **CI Workflow** (`.github/workflows/ci.yml`): Runs unit tests and builds the debug APK on every push and pull request to `main`. The debug APK is uploaded as a build artifact.
-- **Release Workflow** (`.github/workflows/release.yml`): Dispatched manually to compile a minified release APK and publish a tagged GitHub Release with the APK attached.
-
----
-
-## Project Structure
-
-```
-hetrix-android/
-├── .github/workflows/         # CI and Release automation
-├── app/
-│   ├── build.gradle.kts       # App module configuration
-│   ├── proguard-rules.pro     # R8/ProGuard rules
-│   └── src/
-│       ├── main/
-│       │   ├── AndroidManifest.xml
-│       │   ├── java/io/github/etahamad/hetrix/
-│       │   │   ├── HetrixApplication.kt
-│       │   │   ├── MainActivity.kt
-│       │   │   ├── data/
-│       │   │   │   ├── api/          # Retrofit interface and interceptors
-│       │   │   │   ├── local/        # EncryptedSharedPreferences wrapper
-│       │   │   │   ├── model/        # Data transfer objects and domain models
-│       │   │   │   └── repository/   # Repository implementation and cache
-│       │   │   └── ui/
-│       │   │       ├── components/   # Shared Compose components
-│       │   │       ├── home/         # Uptime dashboard screen
-│       │   │       ├── metrics/      # Server resource telemetry screen
-│       │   │       ├── reputation/   # Blacklist and SNDS screen
-│       │   │       ├── settings/     # Settings and API vault screen
-│       │   │       ├── onboarding/   # API key setup screen
-│       │   │       ├── main/         # Root scaffold and navigation bar
-│       │   │       ├── theme/        # Material 3 colors, typography, shapes
-│       │   │       └── util/         # Formatters and ViewModelFactory
-│       │   └── res/                  # Icons, drawables, and strings
-│       └── test/                     # Unit test suites
-├── gradle/libs.versions.toml          # Gradle version catalog
-├── LICENSE                            # License file
-└── README.md                          # Documentation
-```
-
----
-
 ## Disclaimer
 
 This is an unofficial, community-developed open-source client. It is not affiliated with, maintained, authorized, or endorsed by HetrixTools or any of its affiliates. All product names, logos, and brands are property of their respective owners.
