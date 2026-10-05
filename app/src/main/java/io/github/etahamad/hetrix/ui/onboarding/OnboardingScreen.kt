@@ -118,7 +118,7 @@ fun OnboardingScreen(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                                imageVector = Icons.Default.ShowChart,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
