@@ -3,6 +3,7 @@ package io.github.etahamad.hetrix.data.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
@@ -38,16 +39,10 @@ data class UptimeMonitorsResponseDto(
 /**
  * Location check latency and status entry.
  */
-@Serializable
-data class MonitorLocationDto(
-    @SerialName("uptime_status")
-    val uptimeStatus: String? = null,
-
-    @SerialName("response_time")
-    val responseTime: Long? = null,
-
-    @SerialName("last_check")
-    val lastCheck: Long? = null
+data class LocationCheck(
+    val locationName: String,
+    val status: MonitorStatus,
+    val responseTimeMs: Long?
 )
 
 /**
@@ -79,6 +74,9 @@ data class MonitorDto(
     @SerialName("resolve_address")
     val resolveAddress: String? = null,
 
+    @SerialName("resolve_address_info")
+    val resolveAddressInfo: JsonElement? = null,
+
     @SerialName("ip_or_host")
     val ipOrHost: String? = null,
 
@@ -101,7 +99,7 @@ data class MonitorDto(
     val responseTimeMs: Long? = null,
 
     @SerialName("locations")
-    val locations: Map<String, MonitorLocationDto>? = null,
+    val locationsElement: JsonElement? = null,
 
     @SerialName("last_check")
     val lastCheckTimestamp: Long? = null,
@@ -132,16 +130,54 @@ data class MonitorDto(
         }
 
     /**
+     * Parses locations map dynamically (handles both JSON object and empty array).
+     */
+    val parsedLocations: List<LocationCheck>
+        get() = try {
+            val jsonObject = locationsElement?.jsonObject ?: return emptyList()
+            jsonObject.entries.mapNotNull { (locationKey, value) ->
+                try {
+                    val locObj = value.jsonObject
+                    val locStatus = locObj["uptime_status"]?.jsonPrimitive?.content
+                    val ping = locObj["response_time"]?.jsonPrimitive?.content?.toLongOrNull()
+                    LocationCheck(
+                        locationName = locationKey.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                        status = MonitorStatus.fromString(locStatus),
+                        responseTimeMs = ping
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+    /**
      * Calculates average response time from location checks if available.
      */
     val averageLocationPing: Long?
         get() {
-            val validLatencies = locations?.values?.mapNotNull { it.responseTime }
-            return if (!validLatencies.isNullOrEmpty()) {
+            val validLatencies = parsedLocations.mapNotNull { it.responseTimeMs }
+            return if (validLatencies.isNotEmpty()) {
                 validLatencies.average().toLong()
             } else {
                 responseTimeMs
             }
+        }
+
+    /**
+     * Extracts ISP and Location string from resolve_address_info if available.
+     */
+    val parsedResolveInfo: String?
+        get() = try {
+            val obj = resolveAddressInfo?.jsonObject ?: return null
+            val isp = obj["ISP"]?.jsonPrimitive?.content
+            val city = obj["City"]?.jsonPrimitive?.content
+            val country = obj["Country"]?.jsonPrimitive?.content
+            listOfNotNull(isp, city, country).filter { it.isNotBlank() }.joinToString(", ")
+        } catch (_: Exception) {
+            null
         }
 }
 

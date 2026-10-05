@@ -8,11 +8,14 @@ data class ServerMonitor(
     val name: String,
     val type: String,
     val target: String,
+    val resolveAddress: String? = null,
+    val resolveInfo: String? = null,
     val status: MonitorStatus,
     val uptimePercentage: Double,
     val responseTimeMs: Long?,
     val lastCheckTimestamp: Long,
     val hasAgent: Boolean,
+    val locations: List<LocationCheck> = emptyList(),
     val metrics: ServerMetrics? = null
 )
 
@@ -70,8 +73,8 @@ fun MonitorDto.toDomain(overrideMetrics: ServerMetrics? = null): ServerMonitor {
         ?: ipOrHost?.takeIf { it.isNotBlank() }
         ?: "N/A"
 
-    val effectiveType = type?.replaceFirstChar { it.uppercase() } ?: "Website"
-    
+    val effectiveType = type?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: "Website"
+
     // Status resolution prioritizing uptime_status ('up', 'down') and monitor_status ('active', 'paused')
     val rawStatus = when {
         monitorStatus?.equals("paused", ignoreCase = true) == true -> "paused"
@@ -89,11 +92,14 @@ fun MonitorDto.toDomain(overrideMetrics: ServerMetrics? = null): ServerMonitor {
         name = effectiveName,
         type = effectiveType,
         target = effectiveTarget,
+        resolveAddress = resolveAddress,
+        resolveInfo = parsedResolveInfo,
         status = parsedStatus,
         uptimePercentage = parsedUptime.coerceIn(0.0, 100.0),
         responseTimeMs = averageLocationPing,
         lastCheckTimestamp = parsedLastCheck,
         hasAgent = agentPresent,
+        locations = parsedLocations,
         metrics = overrideMetrics
     )
 }
