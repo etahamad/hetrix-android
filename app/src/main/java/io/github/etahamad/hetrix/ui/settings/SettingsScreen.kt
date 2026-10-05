@@ -680,7 +680,7 @@ fun SettingsScreen(
                             )
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
-                                    text = "HetrixTools for Android",
+                                    text = "HetriX",
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 15.sp

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">HetriX</string>
-    <string name="app_tagline">HetrixTools Monitoring Client</string>
+    <string name="app_tagline">Unofficial HetrixTools Client</string>
     <string name="search_placeholder">Search monitors &amp; servers…</string>
     <string name="settings_title">Settings</string>
     <string name="api_token_label">HetrixTools API Bearer Token</string>

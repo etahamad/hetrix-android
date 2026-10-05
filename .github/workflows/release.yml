@@ -10,7 +10,7 @@ on:
       release_title:
         description: 'Release title'
         required: false
-        default: 'HetrixTools Release'
+        default: 'HetriX Release'
       release_notes:
         description: 'Release notes / description (leave blank to auto-generate from commits)'
         required: false
@@ -62,8 +62,8 @@ jobs:
         run: |
           mkdir -p release_assets
           TAG="${{ inputs.tag_name }}"
-          cp app/build/outputs/apk/release/app-release.apk "release_assets/hetrix-android-${TAG}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "release_assets/hetrix-android-release.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release_assets/HetriX-${TAG}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release_assets/HetriX-release.apk"
           echo "Ready to upload release artifacts:"
           ls -la release_assets/
 
@@ -77,7 +77,7 @@ jobs:
           draft: ${{ inputs.draft }}
           prerelease: ${{ inputs.prerelease }}
           files: |
-            release_assets/hetrix-android-${{ inputs.tag_name }}.apk
-            release_assets/hetrix-android-release.apk
+            release_assets/HetriX-${{ inputs.tag_name }}.apk
+            release_assets/HetriX-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

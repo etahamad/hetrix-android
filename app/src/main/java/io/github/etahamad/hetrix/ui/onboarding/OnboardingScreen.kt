@@ -126,7 +126,7 @@ fun OnboardingScreen(
                         }
                     }
                     Text(
-                        text = "HetrixTools",
+                        text = "HetriX",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.3).sp
